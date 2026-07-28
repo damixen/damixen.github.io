@@ -1,5 +1,5 @@
 const API =
-  "https://faas-sfo3-7872a1dd.doserverless.co/api/v1/web/fn-933ccc11-379c-4af1-aeaa-8df5f5daf1e3/default/telemetry?host_id=hp-do-sfo3&mode=latest";
+  "https://faas-sfo3-7872a1dd.doserverless.co/api/v1/web/fn-933ccc11-379c-4af1-aeaa-8df5f5daf1e3/live-telemetry/telemetry?host_id=hp-do-sfo3&mode=latest";
 
 async function refreshTelemetry() {
     try {
