@@ -1,190 +1,166 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Takuhito Tsujimoto | Security Analyst</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Takuhito Tsujimoto | Security Analyst</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
 
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <div class="logo">Live HoneyPot</div>
 
-<div class="container">
-
-  <header class="hero card">
-    <div>
-      <h1>Takuhito Tsujimoto</h1>
-
-      <p class="subtitle">
-        Security Analyst • Detection Engineering • SOC Operations
-      </p>
-
-      <p class="intro">
-        Transitioning from 15 years of software engineering into
-        cybersecurity through hands-on detection engineering and
-        real-world attack telemetry analysis.
-      </p>
-
-      <div class="links">
-        <a href="#">LinkedIn</a>
-        <a href="#">GitHub</a>
-        <a href="#">Resume</a>
-        <a href="mailto:you@example.com">Email</a>
+        <div class="nav-links">
+          <a class="active" href="index.html">Home</a>
+          <a href="live.html">Live Feed</a>
+          <a href="about.html">About</a>
+          <a href="collaborate.html">Collaborate</a>
+        </div>
       </div>
+    </nav>
+
+    <div class="container">
+      <header class="hero card">
+        <h1>Live HoneyPot</h1>
+
+        <p class="subtitle">
+          Real-world attack telemetry from an internet-facing T-Pot honeypot.
+        </p>
+
+        <p class="intro">
+          Live HoneyPot collects, summarizes, and publishes telemetry from a
+          public honeypot to explore attack activity, detection engineering, and
+          practical security operations.
+        </p>
+
+        <div class="links">
+          <a href="live.html">Explore Live Activity →</a>
+          <a href="https://github.com/YOUR_GITHUB">GitHub</a>
+          <a href="about.html">About</a>
+        </div>
+      </header>
+
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+          <h2>What is Live HoneyPot?</h2>
+        </div>
+
+        <p>
+          Live HoneyPot is a security engineering project that operates an
+          internet-facing T-Pot honeypot and publishes summarized telemetry
+          through a lightweight serverless platform.
+        </p>
+
+        <p>
+          Rather than exposing Elasticsearch directly, telemetry is exported as
+          lightweight JSON reports and served through a DigitalOcean Functions
+          API.
+        </p>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+          <h2>Current Mission</h2>
+        </div>
+
+        <p>
+          Building practical security skills through operating internet-facing
+          honeypots, investigating telemetry, and developing detection logic.
+        </p>
+      </section>
+
+      <section class="card" id="telemetry-card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+          <h2>Current Activity</h2>
+        </div>
+
+        <p id="telemetry-updated">Connecting to honeypot...</p>
+
+        <div class="stats">
+          <div class="stat">
+            <div id="events" class="number">-</div>
+            <div class="label">Events (24h)</div>
+          </div>
+
+          <div class="stat">
+            <div id="uniqueIps" class="number">-</div>
+            <div class="label">Unique IPs</div>
+          </div>
+
+          <div class="stat">
+            <div id="countryCount" class="number">-</div>
+            <div class="label">Countries</div>
+          </div>
+        </div>
+
+        <p>
+          This page shows a live snapshot of telemetry collected from the
+          internet-facing honeypot. Explore the Live Feed for additional details
+          and historical reports.
+        </p>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+          <h2>Latest Investigation</h2>
+        </div>
+
+        <h3>SMB Scan Spike on TCP/445</h3>
+
+        <p>
+          Investigated large-scale SMB scanning activity using T-Pot, Suricata,
+          and ELK. Correlated telemetry across network events, session patterns,
+          and source infrastructure.
+        </p>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="number">25k+</div>
+            <div class="label">Events Analyzed</div>
+          </div>
+
+          <div class="stat">
+            <div class="number">3</div>
+            <div class="label">Data Sources</div>
+          </div>
+
+          <div class="stat">
+            <div class="number">10+</div>
+            <div class="label">Detection Rules</div>
+          </div>
+        </div>
+
+        <!-- Optional screenshot -->
+        <!-- <img class="screenshot" src="assets/smb-spike.png"> -->
+      </section>
     </div>
-  </header>
+  </body>
+  <script src="js/app.js"></script>
+</html>
 
-  <section class="card">
-    <div class="section-header">
-      <span class="status-dot"></span>
-      <h2>Current Mission</h2>
-    </div>
-
-    <p>
-      Building practical security skills through operating internet-facing
-      honeypots, investigating telemetry, and developing detection logic.
-    </p>
-  </section>
-
-  <section class="card" id="telemetry-card">
-  <div class="section-header">
-    <span class="status-dot"></span>
-    <h2>Live Honeypot Telemetry</h2>
-  </div>
-
-  <p id="telemetry-updated">
-    Connecting to honeypot...
-  </p>
-
-  <div class="stats">
-
-    <div class="stat">
-      <div id="events" class="number">-</div>
-      <div class="label">Events (24h)</div>
-    </div>
-
-    <div class="stat">
-      <div id="uniqueIps" class="number">-</div>
-      <div class="label">Unique IPs</div>
-    </div>
-
-    <div class="stat">
-      <div id="countryCount" class="number">-</div>
-      <div class="label">Countries</div>
-    </div>
-
-  </div>
+<footer class="footer">
 
   <p>
-    Live telemetry collected from an internet-facing T-Pot honeypot and
-    refreshed automatically.
+    Live HoneyPot • Built by Takuhito Tsujimoto
   </p>
-</section>
 
-  <section class="card">
-    <div class="section-header">
-      <span class="status-dot"></span>
-      <h2>Latest Investigation</h2>
-    </div>
+  <div class="footer-links">
+    <a href="about.html">About</a>
+    <a href="collaborate.html">Collaborate</a>
+    <a href="https://github.com/YOUR_GITHUB">GitHub</a>
+  </div>
 
-    <h3>SMB Scan Spike on TCP/445</h3>
-
-    <p>
-      Investigated large-scale SMB scanning activity using T-Pot,
-      Suricata, and ELK. Correlated telemetry across network events,
-      session patterns, and source infrastructure.
-    </p>
-
-    <div class="stats">
-      <div class="stat">
-        <div class="number">25k+</div>
-        <div class="label">Events Analyzed</div>
-      </div>
-
-      <div class="stat">
-        <div class="number">3</div>
-        <div class="label">Data Sources</div>
-      </div>
-
-      <div class="stat">
-        <div class="number">10+</div>
-        <div class="label">Detection Rules</div>
-      </div>
-    </div>
-
-    <!-- Optional screenshot -->
-    <!-- <img class="screenshot" src="assets/smb-spike.png"> -->
-
-  </section>
-
-  <section class="card">
-    <div class="section-header">
-      <span class="status-dot"></span>
-      <h2>Featured Projects</h2>
-    </div>
-
-    <div class="project">
-      <h3>Security Monitoring & Detection Lab</h3>
-
-      <p>
-        Cloud-based honeypot environment using T-Pot, ELK, Metricbeat,
-        and Suricata to collect and analyze real-world attack telemetry.
-      </p>
-
-      <div class="tags">
-        <span>ELK</span>
-        <span>Suricata</span>
-        <span>T-Pot</span>
-        <span>Detection Engineering</span>
-        <span>DigitalOcean</span>
-      </div>
-    </div>
-
-    <div class="project">
-      <h3>ESKit</h3>
-
-      <p>
-        Command-line toolkit for Elasticsearch snapshot, repository,
-        and index management across remote clusters.
-      </p>
-
-      <div class="tags">
-        <span>Python</span>
-        <span>Elasticsearch</span>
-        <span>Automation</span>
-      </div>
-    </div>
-
-  </section>
-
-  <section class="card">
-    <div class="section-header">
-      <span class="status-dot"></span>
-      <h2>Conference Status</h2>
-    </div>
-
-    <div class="conference">
-      🟢 BSidesLV 2026
-    </div>
-
-    <div class="conference">
-      🟢 DEF CON 34
-    </div>
-
-    <p>
-      Interested in discussing SOC operations, detection engineering,
-      telemetry analysis, and practical security learning.
-    </p>
-
-  </section>
-
-</div>
-
-</body>
-<script src="js/app.js"></script>
-
-</html>
+</footer>

@@ -20,7 +20,7 @@ body {
 }
 
 .container {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 24px;
 }
@@ -123,4 +123,76 @@ p {
 .conference {
   margin-bottom: 12px;
   font-family: "JetBrains Mono", monospace;
+}
+
+/* ---------- Navigation ---------- */
+
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    background: rgba(15,17,21,.95);
+    border-bottom: 1px solid var(--border);
+
+    backdrop-filter: blur(8px);
+}
+
+.navbar-inner {
+    max-width: 1000px;
+    margin: auto;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 16px 24px;
+}
+
+.logo {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.nav-links {
+    display: flex;
+    gap: 24px;
+}
+
+.nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    transition: .2s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: var(--text);
+}
+
+/* ---------- Footer ---------- */
+
+.footer {
+    text-align: center;
+
+    color: var(--muted);
+
+    margin: 48px 0 24px;
+}
+
+.footer-links {
+    margin-top: 16px;
+
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.footer-links a {
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.footer-links a:hover {
+    color: var(--text);
 }
