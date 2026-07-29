@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Live Feed | Live HoneyPot</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+  <body>
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <div class="logo">Live HoneyPot</div>
+
+        <div class="nav-links">
+          <a href="index.html"> Home </a>
+
+          <a class="active" href="live.html"> Live Feed </a>
+
+          <a href="about.html"> About </a>
+
+          <a href="collaborate.html"> Collaborate </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+          <h2>Live Feed</h2>
+        </div>
+
+        <div class="feed-controls">
+          <label>
+            Host
+
+            <select id="host">
+              <option value="hp-do-sfo3">hp-do-sfo3</option>
+            </select>
+          </label>
+
+          <label>
+            Report
+
+            <div>
+              <label>
+                <input type="radio" name="mode" value="latest" checked />
+                Latest
+              </label>
+
+              <label>
+                <input type="radio" name="mode" value="daily" />
+                Daily
+              </label>
+            </div>
+          </label>
+
+          <label>
+            Date
+
+            <input id="date" type="date" />
+          </label>
+
+          <button id="load-feed">Load</button>
+
+          <p id="feed-status"></p>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+
+          <h2>Current Activity</h2>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div id="events" class="number">-</div>
+
+            <div class="label">Events</div>
+          </div>
+
+          <div class="stat">
+            <div id="uniqueIps" class="number">-</div>
+
+            <div class="label">Unique IPs</div>
+          </div>
+
+          <div class="stat">
+            <div id="countryCount" class="number">-</div>
+
+            <div class="label">Countries</div>
+          </div>
+
+          <div class="stat">
+            <div id="updated" class="number">-</div>
+
+            <div class="label">Last Updated</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+
+          <h2>Top Protocols</h2>
+        </div>
+
+        <table class="dashboard-table">
+          <tr>
+            <th>Port</th>
+
+            <th>Events</th>
+          </tr>
+
+          <tbody id="protocols-table"></tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+
+          <h2>Top Countries</h2>
+        </div>
+
+        <table class="dashboard-table">
+          <tr>
+            <th>Country</th>
+
+            <th>Events</th>
+          </tr>
+
+          <tbody id="countries-table"></tbody>
+        </table>
+      </section>
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+
+          <h2>Honeypot Activity</h2>
+        </div>
+
+        <table class="dashboard-table">
+          <tr>
+            <th>Honeypot</th>
+
+            <th>Events</th>
+          </tr>
+
+          <tbody id="honeypots-table"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <p>Live HoneyPot • Built by Takuhito Tsujimoto</p>
+
+      <div class="footer-links">
+        <a href="about.html"> About </a>
+
+        <a href="collaborate.html"> Collaborate </a>
+
+        <a href="https://github.com/YOUR_GITHUB"> GitHub </a>
+      </div>
+    </footer>
+
+    <script src="js/live.js"></script>
+  </body>
+</html>
