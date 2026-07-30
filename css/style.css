@@ -33,9 +33,50 @@ body {
   margin-bottom: 24px;
 }
 
+.hero-image img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+
+/* ---------- Hero Title ---------- */
+
+.hero-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hero-title h1 {
+  margin: 0;
+}
+
+.hero-title img {
+  width: 120px;
+  height: 120px;
+
+  object-fit: cover;
+
+  border-radius: 50%;
+
+  border: 1px solid var(--border);
+}
+
+/* ---------- Typography ---------- */
+
 h1 {
   margin-top: 0;
   font-size: 2.4rem;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+h3 {
+  margin-top: 24px;
 }
 
 .subtitle {
@@ -47,6 +88,8 @@ h1 {
 p {
   color: var(--muted);
 }
+
+/* ---------- Links ---------- */
 
 .links {
   display: flex;
@@ -67,6 +110,8 @@ p {
   border-color: var(--accent);
 }
 
+/* ---------- Section Header ---------- */
+
 .section-header {
   display: flex;
   align-items: center;
@@ -79,6 +124,8 @@ p {
   background: #3ddc84;
   border-radius: 50%;
 }
+
+/* ---------- Statistics ---------- */
 
 .stats {
   display: flex;
@@ -101,9 +148,95 @@ p {
   font-size: 0.9rem;
 }
 
-.project {
-  margin-top: 24px;
+/* ---------- Dashboard Tables ---------- */
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
 }
+
+.dashboard-table th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  padding: 8px;
+}
+
+.dashboard-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ---------- Status Messages ---------- */
+
+.status-note {
+  color: var(--muted);
+
+  font-size: 0.75rem;
+
+  font-family: "JetBrains Mono", monospace;
+
+  opacity: 0.8;
+
+  margin: 12px 0 0;
+}
+
+.status-note.error {
+  color: #ff8a8a;
+}
+
+/* ---------- Sparkline ---------- */
+
+.chart-wrapper {
+  height: 160px;
+  margin-top: 16px;
+}
+
+#sparkline {
+  width: 100%;
+
+  height: 100%;
+}
+
+.sparkline-line {
+  fill: none;
+
+  stroke: var(--accent);
+
+  stroke-width: 2;
+
+  stroke-linejoin: round;
+
+  stroke-linecap: round;
+}
+
+.axis {
+  stroke: var(--border);
+
+  stroke-width: 1;
+}
+
+.axis-label {
+  fill: var(--muted);
+
+  font-size: 12px;
+
+  font-family: "JetBrains Mono", monospace;
+}
+
+.x-label {
+  text-align: center;
+
+  color: var(--muted);
+
+  font-size: 0.8rem;
+
+  margin-top: 8px;
+}
+
+/* ---------- Tags ---------- */
 
 .tags {
   display: flex;
@@ -120,6 +253,12 @@ p {
   font-size: 0.9rem;
 }
 
+/* ---------- Projects ---------- */
+
+.project {
+  margin-top: 24px;
+}
+
 .conference {
   margin-bottom: 12px;
   font-family: "JetBrains Mono", monospace;
@@ -129,10 +268,13 @@ p {
 
 .navbar {
   position: sticky;
+
   top: 0;
+
   z-index: 100;
 
   background: rgba(15, 17, 21, 0.95);
+
   border-bottom: 1px solid var(--border);
 
   backdrop-filter: blur(8px);
@@ -143,25 +285,22 @@ p {
   margin: auto;
 
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
 
   padding: 16px 24px;
 }
 
-.logo {
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
 .nav-links {
   display: flex;
-  gap: 24px;
+  gap: 28px;
 }
 
 .nav-links a {
   color: var(--muted);
+
   text-decoration: none;
+
   transition: 0.2s;
 }
 
@@ -184,12 +323,15 @@ p {
   margin-top: 16px;
 
   display: flex;
+
   justify-content: center;
+
   gap: 20px;
 }
 
 .footer-links a {
   color: var(--muted);
+
   text-decoration: none;
 }
 
@@ -197,29 +339,10 @@ p {
   color: var(--text);
 }
 
-/* ---------- Live Feed ---------- */
+/* ---------- Buttons ---------- */
 
-.feed-controls {
-  display: flex;
-
-  flex-wrap: wrap;
-
-  gap: 20px;
-
-  align-items: end;
-}
-
-.feed-controls label {
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 6px;
-}
-
-select,
-input {
-  background: var(--bg);
+button {
+  background: transparent;
 
   color: var(--text);
 
@@ -227,41 +350,256 @@ input {
 
   border-radius: 8px;
 
-  padding: 8px;
-}
+  padding: 8px 14px;
 
-button {
-  background: var(--accent);
-
-  border: none;
-
-  border-radius: 8px;
-
-  padding: 9px 16px;
+  font-family: Inter, sans-serif;
 
   cursor: pointer;
+
+  transition: 0.2s;
 }
 
-.dashboard-table {
-  width: 100%;
-
-  border-collapse: collapse;
+button:hover {
+  border-color: var(--accent);
 }
 
-.dashboard-table th,
-.dashboard-table td {
-  padding: 12px;
+button:disabled {
+  opacity: 0.5;
 
-  border-bottom: 1px solid var(--border);
-
-  text-align: left;
+  cursor: not-allowed;
 }
 
-.dashboard-table th {
-  color: var(--muted);
+.grid {
+  stroke: var(--border);
+
+  stroke-width: 1;
+
+  opacity: 0.5;
 }
 
-.feed-status {
-    color: #ff8a8a;
-    margin-top: 12px;
+.sparkline-fill {
+  fill: rgba(90, 200, 250, 0.08);
+}
+
+.sparkline-point {
+  fill: var(--accent);
+}
+
+.axis-label {
+  fill: var(--muted);
+
+  font-size: 11px;
+
+  font-family: "JetBrains Mono", monospace;
+}
+.architecture {
+  background: #11151b;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  color: var(--text);
+  font-family: "JetBrains Mono", monospace;
+  overflow-x: auto;
+}
+.section-header h2 {
+  margin: 0;
+}
+.feed-controls {
+  display: flex;
+  align-items: end;
+  gap: 20px;
+  flex-wrap: wrap;
+
+  margin-bottom: 24px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 16px;
+}
+
+/* ==========================================
+   Mobile Layout
+   ========================================== */
+
+@media (max-width: 768px) {
+  /* ---------- General Layout ---------- */
+
+  .container {
+    padding: 16px;
+  }
+
+  .card {
+    padding: 18px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+  }
+
+  .hero-title {
+    justify-content: center;
+  }
+
+  .hero-title img {
+    width: 90px;
+    height: 90px;
+  }
+
+  /* ---------- Typography ---------- */
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  .section-header {
+    gap: 8px;
+  }
+
+  .section-header h2 {
+    line-height: 1.2;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  /* ---------- Navigation ---------- */
+
+  .navbar-inner {
+    padding: 14px 16px;
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+    gap: 12px 20px;
+  }
+
+  /* ---------- Links ---------- */
+
+  .links {
+    flex-direction: column;
+  }
+
+  .links a {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* ---------- Statistics ---------- */
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .stat {
+    min-width: 0;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .number {
+    font-size: 1.3rem;
+  }
+
+  /* ---------- Feed Controls ---------- */
+
+  .feed-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+
+    margin-bottom: 16px;
+  }
+
+  .control-group {
+    width: 100%;
+  }
+
+  .control-group label {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  /* Host + Date */
+
+  .control-group select,
+  .control-group input[type="date"] {
+    width: 100%;
+    min-height: 38px;
+  }
+
+  .feed-controls {
+    margin-bottom: 8px;
+  }
+
+  .status-note {
+    font-size: 0.7rem;
+
+    margin-top: 8px;
+  }
+
+  /* Report mode */
+
+  .radio-group {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+  }
+
+  /* Button */
+
+  .feed-controls button {
+    width: 100%;
+    min-height: 38px;
+  }
+
+  /* Status message */
+
+  .feed-status {
+    grid-column: 1 / -1;
+
+    margin: 0;
+
+    min-height: 0;
+
+    font-size: 0.8rem;
+  }
+
+  /* ---------- Dashboard ---------- */
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* ---------- Chart ---------- */
+
+  .chart-wrapper {
+    height: 130px;
+  }
+
+  #sparkline {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ---------- Footer ---------- */
+
+  .footer-links {
+    flex-direction: column;
+    gap: 10px;
+  }
 }

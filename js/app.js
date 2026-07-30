@@ -21,7 +21,7 @@ async function refreshTelemetry() {
     const updated = new Date(telemetry.updated_at).toLocaleString();
 
     document.getElementById("telemetry-updated").textContent =
-      `Last updated: ${updated}`;
+      `Updated: ${updated}`;
   } catch (err) {
     document.getElementById("telemetry-updated").textContent =
       "Unable to load telemetry.";

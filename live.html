@@ -20,15 +20,10 @@
   <body>
     <nav class="navbar">
       <div class="navbar-inner">
-        <div class="logo">Live HoneyPot</div>
-
         <div class="nav-links">
           <a href="index.html"> Home </a>
-
-          <a class="active" href="live.html"> Live Feed </a>
-
+          <a class="active" href="live.html"> Live </a>
           <a href="about.html"> About </a>
-
           <a href="collaborate.html"> Collaborate </a>
         </div>
       </div>
@@ -42,18 +37,18 @@
         </div>
 
         <div class="feed-controls">
-          <label>
-            Host
+          <div class="control-group">
+            <label for="host">Host</label>
 
             <select id="host">
               <option value="hp-do-sfo3">hp-do-sfo3</option>
             </select>
-          </label>
+          </div>
 
-          <label>
-            Report
+          <div class="control-group">
+            <label>Report</label>
 
-            <div>
+            <div class="radio-group">
               <label>
                 <input type="radio" name="mode" value="latest" checked />
                 Latest
@@ -64,17 +59,19 @@
                 Daily
               </label>
             </div>
-          </label>
+          </div>
 
-          <label>
-            Date
+          <div class="control-group">
+            <label for="date">Date</label>
 
             <input id="date" type="date" />
-          </label>
+          </div>
 
-          <button id="load-feed">Load</button>
+          <div class="control-group">
+            <button id="load-feed" disabled>Refresh Report</button>
+          </div>
 
-          <p id="feed-status"></p>
+          <p id="feed-status" class="status-note"></p>
         </div>
       </section>
 
@@ -103,12 +100,27 @@
 
             <div class="label">Countries</div>
           </div>
+        </div>
+        <p id="updated" class="status-note"></p>
+      </section>
 
-          <div class="stat">
-            <div id="updated" class="number">-</div>
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
 
-            <div class="label">Last Updated</div>
+          <h2>Activity Trend</h2>
+        </div>
+
+        <div id="sparkline-container">
+          <div class="chart-wrapper">
+            <svg
+              id="sparkline"
+              viewBox="0 0 400 180"
+              preserveAspectRatio="none"
+            ></svg>
           </div>
+
+          <div class="x-label">Time (UTC) — Last 24 Hours</div>
         </div>
       </section>
 
@@ -174,7 +186,13 @@
 
         <a href="collaborate.html"> Collaborate </a>
 
-        <a href="https://github.com/YOUR_GITHUB"> GitHub </a>
+        <a
+          href="https://github.com/damixen"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          GitHub
+        </a>
       </div>
     </footer>
 

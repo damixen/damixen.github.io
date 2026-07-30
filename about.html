@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>About | Live HoneyPot</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+  <body>
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <div class="nav-links">
+          <a href="index.html">Home</a>
+          <a href="live.html">Live</a>
+          <a class="active" href="about.html">About</a>
+          <a href="collaborate.html">Collaborate</a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+          <h2>About Live HoneyPot</h2>
+        </div>
+
+        <p>
+          Live HoneyPot is a security monitoring project built around an
+          internet-facing T-Pot honeypot.
+        </p>
+
+        <p>
+          The project collects real-world attack telemetry, analyzes suspicious
+          activity, and explores practical security operations workflows
+          including detection engineering, investigation, and SIEM monitoring.
+        </p>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+          <h2>Architecture</h2>
+        </div>
+
+        <p>The project follows a lightweight security telemetry pipeline:</p>
+
+        <pre class="architecture">
+Internet Attack Traffic
+          |
+          v
+     T-Pot Honeypot
+          |
+          v
+ Elasticsearch / ELK
+          |
+          +--> Investigation
+          |
+          +--> Detection Engineering
+          |
+          v
+  Public Telemetry Dashboard
+        </pre>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+          <h2>Objectives</h2>
+        </div>
+
+        <ul>
+          <li>Practice security monitoring and incident investigation</li>
+          <li>Analyze attacker behavior using real telemetry</li>
+          <li>Build detection engineering workflows</li>
+          <li>Develop security automation tools</li>
+          <li>Explore practical SIEM operations</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+          <h2>Technologies</h2>
+        </div>
+
+        <div class="tags">
+          <span>T-Pot</span>
+          <span>Elasticsearch</span>
+          <span>Kibana</span>
+          <span>Suricata</span>
+          <span>Python</span>
+          <span>DigitalOcean</span>
+          <span>Security Monitoring</span>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <p>Live HoneyPot • Built by Takuhito Tsujimoto</p>
+
+      <div class="footer-links">
+        <a href="about.html">About</a>
+        <a href="collaborate.html">Collaborate</a>
+        <a href="https://github.com/YOUR_GITHUB">GitHub</a>
+      </div>
+    </footer>
+  </body>
+</html>
