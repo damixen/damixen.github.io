@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>About | Live HoneyPot</title>
+    <title>About | GingerPot</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -33,18 +33,18 @@
       <section class="card">
         <div class="section-header">
           <span class="status-dot"></span>
-          <h2>About Live HoneyPot</h2>
+          <h2>About GingerPot</h2>
         </div>
 
         <p>
-          Live HoneyPot is a security monitoring project built around an
+          GingerPot is a security monitoring project built around an
           internet-facing T-Pot honeypot.
         </p>
 
         <p>
-          The project collects real-world attack telemetry, analyzes suspicious
-          activity, and explores practical security operations workflows
-          including detection engineering, investigation, and SIEM monitoring.
+          It collects real-world attack telemetry, analyzes suspicious activity,
+          and transforms raw security events into practical observations about
+          attacker behavior, detection engineering, and security operations.
         </p>
       </section>
 
@@ -54,7 +54,11 @@
           <h2>Architecture</h2>
         </div>
 
-        <p>The project follows a lightweight security telemetry pipeline:</p>
+        <p>
+          GingerPot separates data collection from public visualization.
+          Sensitive Elasticsearch data remains private while summarized
+          telemetry is published through a lightweight reporting pipeline.
+        </p>
 
         <pre class="architecture">
 Internet Attack Traffic
@@ -70,7 +74,10 @@ Internet Attack Traffic
           +--> Detection Engineering
           |
           v
-  Public Telemetry Dashboard
+ Telemetry Export Pipeline
+          |
+          v
+ Public Dashboard
         </pre>
       </section>
 
@@ -83,8 +90,8 @@ Internet Attack Traffic
         <ul>
           <li>Practice security monitoring and incident investigation</li>
           <li>Analyze attacker behavior using real telemetry</li>
-          <li>Build detection engineering workflows</li>
-          <li>Develop security automation tools</li>
+          <li>Develop detection engineering workflows</li>
+          <li>Build security automation tools</li>
           <li>Explore practical SIEM operations</li>
         </ul>
       </section>
@@ -102,18 +109,45 @@ Internet Attack Traffic
           <span>Suricata</span>
           <span>Python</span>
           <span>DigitalOcean</span>
-          <span>Security Monitoring</span>
+          <span>Detection Engineering</span>
+          <span>SIEM</span>
         </div>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <span class="status-dot"></span>
+          <h2>About the Name</h2>
+        </div>
+
+        <p>
+          The name GingerPot comes from a simple personal connection: honey and
+          ginger are ingredients I enjoy together. The honeypot provides the raw
+          ingredients of security telemetry — scans, probes, and suspicious
+          activity — while investigation and analysis transform them into
+          meaningful insights.
+        </p>
+
+        <p>
+          The project's visual identity is inspired by traditional blue
+          gingerpot artwork. The blue color also carries a subtle connection to
+          the Blue Team mindset: observing, investigating, and improving
+          security through visibility.
+        </p>
       </section>
     </div>
 
     <footer class="footer">
-      <p>Live HoneyPot • Built by Takuhito Tsujimoto</p>
-
       <div class="footer-links">
         <a href="about.html">About</a>
         <a href="collaborate.html">Collaborate</a>
-        <a href="https://github.com/YOUR_GITHUB">GitHub</a>
+        <a
+          href="https://github.com/damixen"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          GitHub
+        </a>
       </div>
     </footer>
   </body>

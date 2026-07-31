@@ -29,45 +29,56 @@ body {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 28px;
+  padding: 32px;
   margin-bottom: 24px;
 }
 
-.hero-image img {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 1px solid var(--border);
+.hero-card {
+  text-align: center;
+  padding: 72px 32px 60px;
 }
 
-/* ---------- Hero Title ---------- */
+.hero-logo {
+  margin-bottom: 10px;
+}
 
-.hero-title {
+.hero-logo img {
+  width: 140px;
+  height: 140px;
+
+  object-fit: cover;
+  border-radius: 50%;
+
+  border: 2px solid var(--border);
+}
+
+.live-badge {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
-.hero-title h1 {
-  margin: 0;
+.live-badge .status-dot {
+  width: 8px;
+  height: 8px;
 }
 
-.hero-title img {
-  width: 120px;
-  height: 120px;
+.links .primary {
+  background: var(--accent);
+  color: #08131b;
+  border-color: var(--accent);
+  font-weight: 600;
+}
 
-  object-fit: cover;
-
-  border-radius: 50%;
-
-  border: 1px solid var(--border);
+.links .primary:hover {
+  opacity: 0.9;
+  border-color: var(--accent);
 }
 
 /* ---------- Typography ---------- */
 
 h1 {
-  margin-top: 0;
+  margin: 0;
   font-size: 2.4rem;
 }
 
@@ -82,11 +93,16 @@ h3 {
 .subtitle {
   color: var(--accent);
   font-family: "JetBrains Mono", monospace;
+  margin: 8px 0 18px;
 }
 
 .intro,
 p {
   color: var(--muted);
+}
+
+.intro {
+    margin-bottom: 20px;
 }
 
 /* ---------- Links ---------- */
@@ -110,12 +126,21 @@ p {
   border-color: var(--accent);
 }
 
+.links a {
+  white-space: normal;
+}
+
 /* ---------- Section Header ---------- */
 
 .section-header {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-bottom: 18px;
+}
+
+.section-header h2 {
+  margin: 0;
 }
 
 .status-dot {
@@ -293,7 +318,7 @@ p {
 
 .nav-links {
   display: flex;
-  gap: 28px;
+  gap: 36px;
 }
 
 .nav-links a {
@@ -441,13 +466,18 @@ button:disabled {
     padding-bottom: 14px;
   }
 
-  .hero-title {
-    justify-content: center;
+  .hero-card {
+    padding: 56px 20px 44px;
   }
 
-  .hero-title img {
-    width: 90px;
-    height: 90px;
+  .hero-logo img {
+    width: 88px;
+    height: 88px;
+  }
+
+  .live-badge {
+    font-size: 0.75rem;
+    margin: 18px 0 24px;
   }
 
   /* ---------- Typography ---------- */
@@ -480,8 +510,8 @@ button:disabled {
   }
 
   .nav-links {
-    flex-wrap: wrap;
-    gap: 12px 20px;
+    gap: 16px;
+    justify-content: center;
   }
 
   /* ---------- Links ---------- */
@@ -505,10 +535,6 @@ button:disabled {
 
   .stat {
     min-width: 0;
-  }
-
-  .stats {
-    grid-template-columns: 1fr;
   }
 
   .number {
