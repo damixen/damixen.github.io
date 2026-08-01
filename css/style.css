@@ -8,7 +8,6 @@
   --control-card: #202733;
   --control-border: #344050;
 }
-}
 
 * {
   box-sizing: border-box;
@@ -357,6 +356,14 @@ p {
 
 .footer-links a:hover {
   color: var(--text);
+}
+
+.footer-version {
+  margin-top: 18px;
+  color: var(--muted);
+  opacity: 0.65;
+  font-size: 0.8rem;
+  font-family: "JetBrains Mono", monospace;
 }
 
 /* ---------- Buttons ---------- */
