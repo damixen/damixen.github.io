@@ -5,6 +5,9 @@
   --text: #dfe6ee;
   --muted: #97a2b2;
   --accent: #5ac8fa;
+  --control-card: #202733;
+  --control-border: #344050;
+}
 }
 
 * {
@@ -102,7 +105,7 @@ p {
 }
 
 .intro {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 /* ---------- Links ---------- */
@@ -241,14 +244,6 @@ p {
   stroke: var(--border);
 
   stroke-width: 1;
-}
-
-.axis-label {
-  fill: var(--muted);
-
-  font-size: 12px;
-
-  font-family: "JetBrains Mono", monospace;
 }
 
 .x-label {
@@ -438,15 +433,91 @@ button:disabled {
   margin-bottom: 24px;
 }
 
-.control-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 .radio-group {
   display: flex;
   gap: 16px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.control-group label:first-child {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.date-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.feed-meta {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.live-toolbar {
+  position: sticky;
+  top: 70px;
+  z-index: 20;
+}
+
+.live-toolbar {
+  background: var(--control-card);
+  border: 1px solid var(--control-border);
+}
+
+.collapsed-summary {
+  display: none;
+
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.toolbar-toggle {
+  margin-left: auto;
+
+  background: none;
+  border: none;
+
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.live-toolbar.collapsed .toolbar-description,
+.live-toolbar.collapsed .feed-controls,
+.live-toolbar.collapsed .feed-meta {
+  display: none;
+}
+
+.live-toolbar.collapsed .collapsed-summary {
+  display: flex;
+}
+
+/* ==========================================
+   Desktop Enhancement
+   ========================================== */
+@media (min-width: 768px) {
+  .control-group:last-child {
+    grid-column: span 2;
+  }
 }
 
 /* ==========================================

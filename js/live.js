@@ -31,6 +31,19 @@ async function loadFeed() {
 
     const telemetry = await response.json();
 
+    if (
+      !telemetry ||
+      typeof telemetry.events !== "number" ||
+      typeof telemetry.unique_ips !== "number" ||
+      !Array.isArray(telemetry.countries) ||
+      !Array.isArray(telemetry.protocols) ||
+      !Array.isArray(telemetry.honeypot_types) ||
+      !Array.isArray(telemetry.sparkline) ||
+      !telemetry.sparkline.every((value) => typeof value === "number")
+    ) {
+      throw new Error("Invalid telemetry response");
+    }
+
     document.getElementById("events").textContent =
       telemetry.events.toLocaleString();
 
@@ -55,7 +68,10 @@ async function loadFeed() {
   } catch (error) {
     console.error(error);
 
-    setFeedStatus(`Unable to load telemetry: ${error.message}`, true);
+    setFeedStatus(
+      `Unable to load telemetry data. Please try again later.`,
+      true,
+    );
   }
 }
 
@@ -66,28 +82,23 @@ setDefaultDate();
 loadFeed();
 
 function updateProtocols(protocols) {
-  console.log("Protocols:", protocols);
-
   const table = document.getElementById("protocols-table");
 
   table.innerHTML = "";
 
   protocols.forEach((item) => {
-    table.innerHTML += `
+    const row = document.createElement("tr");
 
-        <tr>
+    const protocol = document.createElement("td");
+    protocol.textContent = item.protocol;
 
-            <td>
-                ${item.protocol}
-            </td>
+    const count = document.createElement("td");
+    count.textContent = item.count.toLocaleString();
 
-            <td>
-                ${item.count.toLocaleString()}
-            </td>
+    row.appendChild(protocol);
+    row.appendChild(count);
 
-        </tr>
-
-        `;
+    table.appendChild(row);
   });
 }
 
@@ -97,21 +108,18 @@ function updateCountries(countries) {
   table.innerHTML = "";
 
   countries.forEach((item) => {
-    table.innerHTML += `
+    const row = document.createElement("tr");
 
-        <tr>
+    const country = document.createElement("td");
+    country.textContent = item.country;
 
-            <td>
-                ${item.country}
-            </td>
+    const count = document.createElement("td");
+    count.textContent = item.count.toLocaleString();
 
-            <td>
-                ${item.count.toLocaleString()}
-            </td>
+    row.appendChild(country);
+    row.appendChild(count);
 
-        </tr>
-
-        `;
+    table.appendChild(row);
   });
 }
 
@@ -121,21 +129,18 @@ function updateHoneypots(honeypots) {
   table.innerHTML = "";
 
   honeypots.forEach((item) => {
-    table.innerHTML += `
+    const row = document.createElement("tr");
 
-        <tr>
+    const type = document.createElement("td");
+    type.textContent = item.type;
 
-            <td>
-                ${item.type}
-            </td>
+    const count = document.createElement("td");
+    count.textContent = item.count.toLocaleString();
 
-            <td>
-                ${item.count.toLocaleString()}
-            </td>
+    row.appendChild(type);
+    row.appendChild(count);
 
-        </tr>
-
-        `;
+    table.appendChild(row);
   });
 }
 
@@ -192,8 +197,6 @@ function formatNumber(value) {
 }
 
 function updateSparkline(values) {
-  console.log(values.length);
-
   const svg = document.getElementById("sparkline");
 
   if (!values || values.length === 0) {
@@ -435,3 +438,39 @@ function timeAgo(timestamp) {
 
   return `${days} day${days === 1 ? "" : "s"} ago`;
 }
+
+const toolbar = document.querySelector(".live-toolbar");
+
+const hideButton = document.getElementById("toggle-controls");
+const showButton = document.getElementById("show-controls");
+
+hideButton.addEventListener("click", () => {
+  toolbar.classList.add("collapsed");
+});
+
+showButton.addEventListener("click", () => {
+  toolbar.classList.remove("collapsed");
+});
+
+const hostSelect = document.getElementById("host");
+const modeInputs = document.querySelectorAll('input[name="mode"]');
+
+const summarySensor = document.getElementById("summary-sensor");
+
+function updateSummary() {
+  const hostText = hostSelect.options[hostSelect.selectedIndex].text;
+
+  summarySensor.textContent = `Sensor: ${hostText}`;
+
+  const selectedMode = document.querySelector(
+    'input[name="mode"]:checked',
+  ).value;
+}
+
+hostSelect.addEventListener("change", updateSummary);
+
+modeInputs.forEach((input) => {
+  input.addEventListener("change", updateSummary);
+});
+
+updateSummary();

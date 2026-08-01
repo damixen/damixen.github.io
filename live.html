@@ -3,8 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <title>Live Feed | Live HoneyPot</title>
+    <meta
+      name="description"
+      content="Explore observed internet activity and security telemetry collected from an internet-facing honeypot."
+    />
+    <title>Live Feed | GingerPot</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,6 +16,10 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
     <link rel="stylesheet" href="css/style.css" />
   </head>
@@ -30,28 +37,32 @@
     </nav>
 
     <div class="container">
-      <section class="card">
+      <section class="card live-toolbar">
         <div class="section-header">
           <span class="status-dot"></span>
           <h2>Live Feed</h2>
         </div>
 
-        <div class="feed-controls">
+        <p class="toolbar-description">
+          Observed internet activity from an internet-facing honeypot.
+        </p>
+
+        <div id="feed-controls" class="feed-controls">
           <div class="control-group">
-            <label for="host">Host</label>
+            <label for="host">Sensor</label>
 
             <select id="host">
-              <option value="hp-do-sfo3">hp-do-sfo3</option>
+              <option value="hp-do-sfo3">US West Coast (hp-do-sfo3)</option>
             </select>
           </div>
 
           <div class="control-group">
-            <label>Report</label>
+            <label>View</label>
 
             <div class="radio-group">
               <label>
                 <input type="radio" name="mode" value="latest" checked />
-                Latest
+                Last 24 Hours
               </label>
 
               <label>
@@ -63,15 +74,30 @@
 
           <div class="control-group">
             <label for="date">Date</label>
-
             <input id="date" type="date" />
           </div>
 
           <div class="control-group">
-            <button id="load-feed" disabled>Refresh Report</button>
+            <button id="load-feed" disabled>Refresh</button>
           </div>
+        </div>
 
-          <p id="feed-status" class="status-note"></p>
+        <div class="feed-meta">
+          <span id="feed-status" aria-live="polite"> Last update: -- </span>
+
+          <span> • Data updated hourly </span>
+
+          <button id="toggle-controls" class="toolbar-toggle">
+            Hide Controls
+          </button>
+        </div>
+
+        <div id="collapsed-summary" class="collapsed-summary">
+          <span id="summary-sensor">Sensor: --</span>
+
+          <button id="show-controls" class="toolbar-toggle">
+            Show Controls
+          </button>
         </div>
       </section>
 
@@ -132,11 +158,12 @@
         </div>
 
         <table class="dashboard-table">
-          <tr>
-            <th>Port</th>
-
-            <th>Events</th>
-          </tr>
+          <thead>
+            <tr>
+              <th scope="col">Port</th>
+              <th scope="col">Events</th>
+            </tr>
+          </thead>
 
           <tbody id="protocols-table"></tbody>
         </table>
