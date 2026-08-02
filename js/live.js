@@ -474,3 +474,21 @@ modeInputs.forEach((input) => {
 });
 
 updateSummary();
+
+const checkbox = document.getElementById("pin-controls");
+const controls = document.querySelector(".live-toolbar");
+
+// Restore preference
+const pinned = localStorage.getItem("pinControls") === "true";
+
+checkbox.checked = pinned;
+
+if (pinned) {
+    controls.classList.add("sticky");
+}
+
+checkbox.addEventListener("change", () => {
+    controls.classList.toggle("sticky", checkbox.checked);
+
+    localStorage.setItem("pinControls", checkbox.checked);
+});

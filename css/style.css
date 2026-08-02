@@ -476,10 +476,15 @@ button:disabled {
   font-size: 0.9rem;
 }
 
-.live-toolbar {
-  position: sticky;
-  top: 70px;
-  z-index: 20;
+.live-toolbar.sticky {
+    position: sticky;
+    top: 70px;
+
+    z-index: 20;
+
+    background: var(--card);
+
+    padding-bottom: 12px;
 }
 
 .live-toolbar {
@@ -516,6 +521,26 @@ button:disabled {
 
 .live-toolbar.collapsed .collapsed-summary {
   display: flex;
+}
+
+/* Pin */
+.pin-option {
+    margin-left: auto;
+
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    color: var(--muted);
+    font-size: 0.85rem;
+
+    cursor: pointer;
+
+    user-select: none;
+}
+
+.pin-option input {
+    cursor: pointer;
 }
 
 /* ==========================================
