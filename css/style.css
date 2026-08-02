@@ -476,20 +476,23 @@ button:disabled {
   font-size: 0.9rem;
 }
 
-.live-toolbar.sticky {
-    position: sticky;
-    top: 70px;
-
-    z-index: 20;
-
-    background: var(--card);
-
-    padding-bottom: 12px;
+.live-toolbar {
+  background: var(--card);
+  border: 1px solid var(--border);
 }
 
-.live-toolbar {
+.live-toolbar.sticky {
+  position: sticky;
+  top: 70px;
+
+  z-index: 20;
+
   background: var(--control-card);
-  border: 1px solid var(--control-border);
+  border-color: var(--control-border);
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+
+  padding-bottom: 12px;
 }
 
 .collapsed-summary {
@@ -525,22 +528,22 @@ button:disabled {
 
 /* Pin */
 .pin-option {
-    margin-left: auto;
+  margin-left: auto;
 
-    display: flex;
-    align-items: center;
-    gap: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 
-    color: var(--muted);
-    font-size: 0.85rem;
+  color: var(--muted);
+  font-size: 0.85rem;
 
-    cursor: pointer;
+  cursor: pointer;
 
-    user-select: none;
+  user-select: none;
 }
 
 .pin-option input {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 /* ==========================================
