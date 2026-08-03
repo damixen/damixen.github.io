@@ -1,6 +1,48 @@
 const API_BASE =
   "https://faas-sfo3-7872a1dd.doserverless.co/api/v1/web/fn-933ccc11-379c-4af1-aeaa-8df5f5daf1e3/live-telemetry/telemetry";
 
+const portServices = {
+  20: "FTP-Data",
+  21: "FTP",
+  22: "SSH",
+  23: "Telnet",
+  25: "SMTP",
+  53: "DNS",
+  80: "HTTP",
+  81: "HTTP-Alt",
+  110: "POP3",
+  111: "RPCBind",
+  135: "MSRPC",
+  139: "NetBIOS",
+  143: "IMAP",
+  389: "LDAP",
+  443: "HTTPS",
+  445: "SMB",
+  465: "SMTPS",
+  514: "Syslog",
+  587: "SMTP-Submission",
+  631: "IPP",
+  993: "IMAPS",
+  995: "POP3S",
+  1433: "MSSQL",
+  1521: "Oracle",
+  1723: "PPTP",
+  1883: "MQTT",
+  2375: "Docker",
+  3306: "MySQL",
+  3389: "RDP",
+  5000: "HTTP-Dev",
+  5432: "PostgreSQL",
+  5900: "VNC",
+  5985: "WinRM",
+  6379: "Redis",
+  6443: "Kubernetes API",
+  8080: "HTTP-Proxy",
+  8443: "HTTPS-Alt",
+  9200: "Elasticsearch",
+  27017: "MongoDB",
+};
+
 async function loadFeed() {
   setFeedStatus("Loading telemetry...");
 
@@ -56,7 +98,7 @@ async function loadFeed() {
     document.getElementById("updated").textContent =
       `Updated ${timeAgo(telemetry.updated_at)}`;
 
-    updateProtocols(telemetry.protocols);
+    updatePorts(telemetry.ports);
 
     updateCountries(telemetry.countries);
 
@@ -99,6 +141,28 @@ function updateProtocols(protocols) {
     row.appendChild(count);
 
     table.appendChild(row);
+  });
+}
+
+function formatPort(port) {
+  return portServices[port] ? `${port} ${portServices[port]}` : `${port}`;
+}
+
+function updatePorts(ports) {
+  if (!ports || ports.length === 0) {
+    return;
+  }
+
+  const portsList = document.getElementById("ports-list");
+
+  portsList.innerHTML = "";
+
+  ports.forEach((port) => {
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    tag.textContent = formatPort(port);
+
+    portsList.appendChild(tag);
   });
 }
 
@@ -484,11 +548,11 @@ const pinned = localStorage.getItem("pinControls") === "true";
 checkbox.checked = pinned;
 
 if (pinned) {
-    controls.classList.add("sticky");
+  controls.classList.add("sticky");
 }
 
 checkbox.addEventListener("change", () => {
-    controls.classList.toggle("sticky", checkbox.checked);
+  controls.classList.toggle("sticky", checkbox.checked);
 
-    localStorage.setItem("pinControls", checkbox.checked);
+  localStorage.setItem("pinControls", checkbox.checked);
 });

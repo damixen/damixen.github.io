@@ -272,6 +272,22 @@ p {
   font-size: 0.9rem;
 }
 
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.85rem;
+  border: 1px solid var(--border);
+}
+
 /* ---------- Projects ---------- */
 
 .project {
