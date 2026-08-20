@@ -1,0 +1,734 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+
+    <meta name="description"
+        content="An experiment in building an AI CLI helper from an existing argparse command definition." />
+
+    <meta property="og:title" content="Building an AI CLI Helper from the CLI's Own Argument Definitions" />
+    <meta property="og:description"
+        content="Exploring how an existing argparse CLI definition can become context for an LLM." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://gingerpot.damixen.com/ai-cli-helper.html" />
+
+    <title>Building an AI CLI Helper | GingerPot</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+
+    <link rel="icon" href="../favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="../favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+
+    <link rel="stylesheet" href="../css/style.css" />
+
+
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/live.html">Live</a>
+                <a class="active" href="/blog.html">Blog</a>
+                <a href="/about.html">About</a>
+                <a href="/collaborate.html">Collaborate</a>
+            </div>
+        </div>
+    </nav>
+
+
+    <main class="container">
+        <article class="blog-card">
+            <header class="blog-header">
+                <p class="blog-kicker">AI / CLI / ESKit</p>
+                <p>August 2026 · ESKit experiment</p>
+                <h1>
+                    Building an AI CLI Helper from the CLI's Own Argument Definitions
+                </h1>
+
+                <p class="blog-meta">
+                    An experiment with argparse, Claude, and ESKit
+                </p>
+            </header>
+
+            <section>
+                <p>
+                    I've been playing around with AI agents lately, and one thing
+                    I've been thinking about is how to add AI capabilities to
+                    <a href="https://github.com/ttsujimoto/eskit" target="_blank" rel="noopener noreferrer">ESKit</a>,
+                    a small Elasticsearch CLI toolkit I built.
+                </p>
+
+                <p>
+                    My first experiment was closer to a traditional AI agent:
+                    Claude gets a set of tools, the tools call ESKit functions, and
+                    the agent can eventually perform operations. I built a simulator
+                    so I could experiment with the architecture without immediately
+                    modifying the real ESKit.
+                    <a href="https://github.com/damixen/eskit-ai" target="_blank" rel="noopener noreferrer">
+                        ESKit-AI</a>
+                </p>
+
+                <p>
+                    That worked surprisingly well. But after playing with it for a
+                    while, I started wondering about something simpler.
+                </p>
+
+                <blockquote>
+                    What if I just wanted to ask my CLI a question?
+                </blockquote>
+
+                <p>For example:</p>
+
+                <pre><code>How do I create an index named test?</code></pre>
+
+                <p>And have it answer:</p>
+
+                <pre><code>eskit index create test</code></pre>
+            </section>
+
+            <section>
+                <h2>What does the AI actually need to know?</h2>
+
+                <p>
+                    ESKit already has a pretty complete definition of its CLI.
+                    It's built with Python's <code>argparse</code>, so the parser
+                    knows things like:
+                </p>
+
+                <ul>
+                    <li>commands and subcommands</li>
+                    <li>arguments</li>
+                    <li>flags</li>
+                    <li>defaults</li>
+                    <li>required arguments</li>
+                    <li>choices</li>
+                    <li>argument types</li>
+                    <li>descriptions</li>
+                    <li>help text</li>
+                </ul>
+
+                <p>
+                    I initially considered creating another schema specifically
+                    for the AI. Then I thought:
+                </p>
+
+                <blockquote>
+                    What if I make argparse the source of truth?
+                </blockquote>
+
+                <p>
+                    I really don't like maintaining multiple definitions that
+                    describe essentially the same interface.
+                </p>
+
+                <p>
+                    So I built a small function that walks the argparse parser
+                    and turns it into JSON.
+                </p>
+
+                <pre><code>
+{
+    "program": "eskit index create",
+    "description": "Create an Elasticsearch index.",
+    "arguments": [
+        {
+            "flags": [],
+            "name": "name",
+            "type": "str",
+            "required": true,
+            "description": "Name of the index."
+        },
+        {
+            "flags": ["--dry-run"],
+            "name": "dry_run",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "description": "Preview the operation without executing it."
+        }
+    ]
+}
+                </code></pre>
+
+                <p>
+                    The JSON is basically a normalized description of the existing
+                    CLI.
+                </p>
+            </section>
+
+            <section>
+                <h2>And then I gave it to Claude</h2>
+
+                <p>
+                    The first experiment was surprisingly effective.
+                </p>
+
+                <pre><code>eskit ai "How can I create an index named a?"</code></pre>
+
+                <p>Claude could respond with:</p>
+
+                <pre><code>eskit index create a</code></pre>
+
+                <p>
+                    It could also understand optional arguments. For example, if
+                    I asked about creating a repository with a filesystem location,
+                    it could figure out:
+                </p>
+
+                <pre><code>eskit repo create backup --location /data/es</code></pre>
+
+                <p>
+                    without me writing a separate AI-specific description of that
+                    command.
+                </p>
+
+                <p>
+                    Then I started asking more interesting questions.
+                </p>
+
+                <blockquote>
+                    How can I rename an Elasticsearch index using ESKit?
+                </blockquote>
+
+                <p>
+                    There isn't a dedicated rename command. Claude figured out
+                    that ESKit can accomplish this by using <code>reindex</code>
+                    to copy the data to a new index and then deleting the original
+                    index.
+                </p>
+
+                <p>
+                    That's where this started feeling less like "AI-powered help
+                    text" and more like an AI actually understanding the CLI.
+                </p>
+            </section>
+
+            <section>
+                <h2>Metadata Makes a Surprisingly Big Difference</h2>
+
+                <p>
+                    I started wondering how much the additional metadata actually
+                    mattered, so I ran a simple A/B experiment. I gave Claude the same command description, once
+                    <strong>without ESKit-specific metadata</strong> and once
+                    <strong>with it</strong>.
+                </p>
+
+                <h3>Without metadata</h3>
+
+                <p>
+                    For the question:
+                </p>
+
+                <blockquote>
+                    What operations can modify data?
+                </blockquote>
+
+                <p>
+                    Claude could still figure out quite a lot. It identified
+                    commands such as:
+                </p>
+
+                <pre><code>
+eskit repo create
+eskit repo delete
+eskit snap create
+eskit snap delete
+eskit snap restore
+eskit index create
+eskit index delete
+eskit reindex
+eskit archive pull
+eskit archive sync
+eskit archive push</code></pre>
+
+
+                <p>
+                    But it didn't have a consistent classification. It grouped
+                    everything under <strong>"Destructive Operations"</strong>,
+                    including commands such as <code>snap create</code> and
+                    <code>index create</code>.
+                </p>
+
+                <h3>With metadata</h3>
+
+                <p>
+                    The same question produced a much more structured answer:
+                </p>
+
+                <pre><code>Write Operations (risk: write)
+eskit pull
+eskit repo create
+eskit snap create
+eskit snap restore
+eskit index create
+eskit reindex
+eskit archive pull
+eskit archive push
+
+Destructive Operations (risk: destructive)
+eskit repo delete
+eskit snap delete
+eskit index delete
+eskit archive sync</code></pre>
+
+
+                <p>
+                    That's already a much better representation of the model's
+                    understanding of the CLI.
+                </p>
+
+                <p>
+                    But the more interesting test was:
+                </p>
+
+                <blockquote>
+                    Can I delete a snapshot without user confirmation?
+                </blockquote>
+
+                <p>Without metadata, Claude answered:</p>
+
+                <blockquote>
+                    Yes, you can delete a snapshot without an interactive
+                    confirmation prompt...
+                </blockquote>
+
+                <p>
+                    It then explained that <code>--force</code> could override
+                    safety checks.
+                </p>
+
+                <p>
+                    That answer isn't completely unreasonable if you only look
+                    at the CLI arguments. The argparse definition tells the model
+                    that <code>snap delete</code> exists and that it has
+                    <code>--force</code>, <code>--push</code>, and
+                    <code>--dry-run</code>.
+                </p>
+
+                <p>
+                    But it doesn't explicitly tell the model that
+                    <strong>user confirmation is a required safety concept</strong>.
+                </p>
+
+                <p>
+                    So I added:
+                </p>
+
+                <pre><code>{
+    "metadata": {
+        "risk": "destructive",
+        "requires_confirmation": true,
+        "description": "The user must explicitly confirm the action before execution."
+    }
+}</code></pre>
+
+
+                <p>
+                    I asked exactly the same question again.
+                </p>
+
+                <p>This time Claude answered:</p>
+
+                <blockquote>
+                    No, you cannot delete a snapshot without user confirmation.
+                </blockquote>
+
+                <p>
+                    It also correctly distinguished <code>--force</code> from
+                    confirmation:
+                </p>
+
+                <blockquote>
+                    <code>--force</code> is an administrative override for safety
+                    checks and is not a substitute for user confirmation.
+                </blockquote>
+
+                <p>
+                    That was probably the most interesting result of the experiment.
+                </p>
+            </section>
+
+            <section>
+                <h2>Metadata isn't just documentation</h2>
+
+                <p>
+                    This made me rethink what I mean by "command description."
+                </p>
+
+                <p>
+                    The <code>argparse</code> information tells Claude
+                    <strong>what the CLI looks like</strong>.
+                </p>
+
+                <p>
+                    The metadata tells Claude
+                    <strong>what the commands mean operationally</strong>.
+                </p>
+
+                <pre><code>argparse
+snap delete
+├── name
+├── --dry-run
+├── --push
+└── --force</code></pre>
+
+
+                <pre><code>ESKit metadata
+snap delete
+├── risk: destructive
+└── requires_confirmation: true</code></pre>
+
+
+                <p>
+                    The second one isn't really needed to execute the CLI.
+                    It's there because I'm asking an AI to reason about the CLI.
+                </p>
+
+                <p>
+                    And that seems to make a surprisingly large difference.
+                </p>
+
+                <p>
+                    I'm sure there are more sophisticated ways to represent this
+                    information, but I like that the first version is so small.
+                    A few semantic fields produced noticeably different behavior
+                    from the model.
+                </p>
+
+                <p>
+                    That's a pretty good return for a few extra fields.
+                </p>
+            </section>
+
+            <section>
+                <h2>A More Complex Question</h2>
+
+                <p>
+                    One of the more interesting tests was asking Claude to go
+                    beyond individual commands and compose a workflow:
+                </p>
+
+                <blockquote>
+                    I have Elasticsearch indices named
+                    <code>index-&lt;date&gt;</code>. Can you give me a script to
+                    create a daily snapshot and transfer the data to my local
+                    host using ESKit?
+                </blockquote>
+
+                <p>
+                    Claude produced a surprisingly complete shell script. It
+                    inferred the date-based index name and composed several
+                    ESKit commands.
+                </p>
+
+                <pre><code>#!/bin/bash
+
+REPO="my-repo"
+ARCHIVE="my-archive"
+
+TODAY=$(date +%Y-%m-%d)
+INDEX="index-${TODAY}"
+SNAPSHOT="snapshot-${TODAY}"
+SNAPSHOT_NAME="${REPO}/${SNAPSHOT}"
+
+eskit pull es
+
+eskit snap create "${SNAPSHOT_NAME}" \
+--index "${INDEX}" \
+--wait
+
+eskit pull archive
+
+eskit archive push "${ARCHIVE}" 
+--dst "localhost:/path/to/local/destination"</code></pre>
+
+
+                <p>
+                    That's much more than a simple command lookup.
+                </p>
+
+                <p>
+                    But there was an important mistake: it used
+                    <code>archive push</code> for the final transfer.
+                </p>
+
+                <p>
+                    In ESKit, <code>archive pull</code> transfers archive data
+                    from the remote source to the local archive:
+                </p>
+
+                <pre><code>Remote source
+ │
+ │ archive pull
+ ▼
+Local archive</code></pre>
+
+
+                <p>
+                    <code>archive push</code> goes in the opposite direction:
+                </p>
+
+                <pre><code>Local archive
+ │
+ │ archive push
+ ▼
+Remote destination</code></pre>
+
+
+                <p>
+                    So the generated workflow was conceptually close, but the
+                    transfer direction was wrong.
+                </p>
+
+                <p>
+                    I actually found this mistake useful. It showed me that the
+                    model can reason across multiple CLI commands and compose a
+                    workflow, but it also exposed a limitation of relying
+                    primarily on CLI argument definitions.
+                </p>
+
+                <p>
+                    <code>argparse</code> tells Claude what commands and arguments
+                    exist. It doesn't necessarily tell it all of the
+                    <strong>semantic relationships between those commands</strong>.
+                </p>
+
+                <p>
+                    That gives me some obvious areas to explore later: better
+                    descriptions, richer metadata, examples, and perhaps explicit
+                    relationships between commands.
+                </p>
+            </section>
+
+            <section>
+                <h2>There Is Still a Lot to Improve</h2>
+
+                <p>
+                    The current implementation is deliberately simple.
+                    The complete command description is currently around
+                    <strong>55 KB</strong>.
+                </p>
+
+                <p>
+                    That's not enormous, but I don't want to blindly send the
+                    entire CLI description to the model for every question.
+                </p>
+
+                <pre><code>argparse JSON
+    │
+    ▼
+normalized/refined JSON
+    │
+    ▼
+projection
+    │
+    ▼
+context-specific command JSON
+    │
+    ▼
+Claude</code></pre>
+
+
+                <p>
+                    For example, a read-only helper might only receive commands
+                    marked <code>risk: read</code>. An operator might receive
+                    additional write operations. An agent could eventually have
+                    access to a much larger capability set.
+                </p>
+
+                <p>
+                    There is also the obvious token-cost question. Sending the
+                    whole command tree on every request won't scale well as the
+                    CLI grows.
+                </p>
+
+                <p>
+                    I haven't optimized that yet.
+                </p>
+
+                <p>
+                    For now, I'm more interested in seeing
+                    <strong>how far the simple version can go</strong>.
+                </p>
+            </section>
+
+            <section>
+                <h2>Helper First, Agent Later</h2>
+
+                <p>
+                    This experiment also changed how I think about the AI
+                    architecture for ESKit.
+                </p>
+
+                <p>
+                    An AI helper doesn't necessarily need to execute anything.
+                    It can simply answer:
+                </p>
+
+                <ul>
+                    <li>"How do I do X?"</li>
+                    <li>"What operations are available?"</li>
+                    <li>"Is this operation destructive?"</li>
+                </ul>
+
+                <p>
+                    That's useful by itself. The user still has ultimate control
+                    over whether to execute the command.
+                </p>
+
+                <p>
+                    But that doesn't mean AI shouldn't execute anything. It's
+                    simply another layer of AI integration that a CLI tool can
+                    have with relatively little effort.
+                </p>
+
+                <p>
+                    It's a <strong>CLI-first</strong> approach.
+                </p>
+
+                <p>
+                    The next experiment is to use the same command description
+                    to turn CLI commands into LLM tool definitions, then translate
+                    the resulting tool call back into an <code>argparse</code>
+                    command.
+                </p>
+
+                <pre><code>argparse
+    │
+    ▼
+Command JSON
+    │
+    ▼
+Claude Tool Definition
+    │
+    ▼
+Claude ← Question
+    │
+    ▼
+index_create(name="test")
+    │
+    ▼
+AI → CLI adapter
+    │
+    ▼
+["index", "create", "test"]
+    │
+    ▼
+argparse
+    │
+    ▼
+existing ESKit command</code></pre>
+
+
+                <p>
+                    If that works, the AI could potentially use the
+                    <strong>existing CLI as its execution interface</strong>,
+                    rather than requiring a completely separate AI-specific
+                    execution layer.
+                </p>
+
+                <p>
+                    That's a different architecture from a standalone AI agent,
+                    and I'm curious to see where the boundary is.
+                </p>
+            </section>
+
+            <section>
+                <h2>Why I'm Playing With This</h2>
+
+                <p>
+                    It started as a way to learn more about LLMs and AI
+                    agents.
+                </p>
+
+                <p>
+                    ESKit was a good candidate because I wanted to see what it
+                    would be like to interact with a real CLI using natural
+                    language.
+                </p>
+
+                <p>
+                    Then it turned into a series of engineering questions.
+                </p>
+
+                <p>
+                    I already had a CLI. <br>
+                    I already had <code>argparse</code>. <br>
+                    I already had descriptions and argument definitions. <br>
+                </p>
+
+                <p>
+                    So instead of building another abstraction immediately,
+                    I wanted to see what would happen if I simply exposed what
+                    I already had to an LLM.
+                </p>
+
+                <p>
+                    So far, the CLI helper works pretty well.
+                    And it's surprisingly pleasant to interact with.
+                </p>
+
+                <p>
+                    That's what makes this experiment fun.
+                </p>
+
+                <p>
+                    I'm going to keep playing with it and see where the simple
+                    approach starts to break down.
+                </p>
+
+                <p class="blog-next">
+                    <strong>
+                        The next experiment is probably going to be the interesting one:
+                        Can I turn this CLI helper into an actual CLI-centric AI agent?
+                    </strong>
+                </p>
+
+                <p>
+                    If you're interested in the experiment, the ESKit branch is here:
+                </p>
+
+                <p>
+                    <a href="https://github.com/damixen/eskit/tree/eskit-ai" target="_blank" rel="noopener noreferrer">
+                        ESKit — eskit-ai branch →
+                    </a>
+                </p>
+
+                <p>
+                    The current implementation is intentionally small: a helper
+                    to dump <code>argparse</code> into JSON, some additional command
+                    metadata, and a simple AI helper.
+                </p>
+                <blockquote>This is part of an ongoing series of experiments exploring AI-assisted
+                    CLI interfaces and agent architectures in ESKit.</blockquote>
+            </section>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="/about.html">About</a>
+            <a href="/collaborate.html">Collaborate</a>
+            <a href="https://github.com/damixen" target="_blank" rel="noopener noreferrer">
+                GitHub
+            </a>
+        </div>
+
+        <p class="footer-version">GingerPot 2026.08.2</p>
+    </footer>
+
+
+</body>
+
+</html>

@@ -435,6 +435,7 @@ button:disabled {
 
   font-family: "JetBrains Mono", monospace;
 }
+
 .architecture {
   background: #11151b;
   border: 1px solid var(--border);
@@ -444,9 +445,11 @@ button:disabled {
   font-family: "JetBrains Mono", monospace;
   overflow-x: auto;
 }
+
 .section-header h2 {
   margin: 0;
 }
+
 .feed-controls {
   display: flex;
   align-items: end;
@@ -749,5 +752,117 @@ button:disabled {
   .footer-links {
     flex-direction: column;
     gap: 10px;
+  }
+}
+
+/* ---------- Blog Articles ---------- */
+
+.blog-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 48px;
+  margin-bottom: 24px;
+}
+
+.blog-header {
+  margin-bottom: 48px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+.blog-kicker {
+  color: var(--accent);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+
+.blog-header h1 {
+  max-width: 850px;
+  font-size: 2.4rem;
+  line-height: 1.25;
+}
+
+.blog-meta {
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.blog-card section {
+  margin-bottom: 48px;
+}
+
+.blog-card h2 {
+  margin-bottom: 20px;
+}
+
+.blog-card h3 {
+  margin-top: 32px;
+  margin-bottom: 12px;
+}
+
+.blog-card a {
+  color: var(--accent);
+}
+
+.blog-card blockquote {
+  margin: 24px 0;
+  padding: 16px 20px;
+  border-left: 3px solid var(--accent);
+  background: #11151b;
+  color: var(--text);
+}
+
+.blog-card pre {
+  margin: 24px 0;
+  padding: 20px;
+  background: #11151b;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-x: auto;
+  color: var(--text);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.blog-card code {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.9em;
+}
+
+.blog-card ul {
+  color: var(--muted);
+  padding-left: 24px;
+}
+
+.blog-next {
+  margin-top: 32px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #11151b;
+}
+
+@media (max-width: 768px) {
+  .blog-card {
+    padding: 24px 18px;
+  }
+
+  .blog-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .blog-card section {
+    margin-bottom: 36px;
+  }
+
+  .blog-card pre {
+    padding: 14px;
+    font-size: 0.75rem;
   }
 }
