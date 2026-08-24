@@ -1,135 +1,148 @@
 <!doctype html>
+
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <meta
-      name="description"
-      content="Experiments, notes, and things I'm building around security engineering, tooling, and AI."
-    />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Experiments, notes, and things I'm building around security engineering, tooling, and AI." />
 
-    <meta
-      property="og:title"
-      content="GingerPot | Blog"
-    />
-    <meta
-      property="og:description"
-      content="Experiments, notes, and things I'm building around security engineering, tooling, and AI."
-    />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://gingerpot.damixen.com/blog.html" />
+  <meta property="og:title" content="GingerPot | Blog" />
+  <meta property="og:description"
+    content="Experiments, notes, and things I'm building around security engineering, tooling, and AI." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://gingerpot.damixen.com/blog.html" />
 
-    <meta name="twitter:card" content="summary" />
-    <meta
-      name="twitter:title"
-      content="GingerPot | Blog"
-    />
-    <meta
-      name="twitter:description"
-      content="Experiments, notes, and things I'm building around security engineering, tooling, and AI."
-    />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="GingerPot | Blog" />
+  <meta name="twitter:description"
+    content="Experiments, notes, and things I'm building around security engineering, tooling, and AI." />
 
-    <title>GingerPot | Blog</title>
+  <title>GingerPot | Blog</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="favicon-32x32.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
 
-    <link rel="icon" href="favicon.ico" sizes="any" />
-    <link rel="icon" type="image/png" href="favicon-32x32.png" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-
-    <link rel="stylesheet" href="css/style.css" />
-  </head>
-
-  <body>
-    <nav class="navbar">
-      <div class="navbar-inner">
-        <div class="nav-links">
-          <a href="/">Home</a>
-          <a href="/live.html">Live</a>
-          <a class="active" href="/blog.html">Blog</a>
-          <a href="/about.html">About</a>
-          <a href="/collaborate.html">Collaborate</a>
-        </div>
-      </div>
-    </nav>
-
-    <div class="container">
-      <header class="hero-card">
-        <h1>Blog</h1>
-
-        <p class="subtitle">
-          Experiments, notes, and things I'm building.
-        </p>
-
-        <p class="intro">
-          A collection of experiments and notes around security engineering,
-          tooling, AI, and whatever I happen to be building.
-        </p>
-      </header>
-
-      <section class="card">
-        <div class="section-header">
-          <span class="status-dot"></span>
-          <h2>Latest</h2>
-        </div>
-
-        <article class="project">
-          <p class="conference">
-            2026-08-20
-          </p>
-
-          <h3>
-            <a href="/blog/eskit-ai-cli-helper.html">
-              Building an AI CLI Helper from the CLI's Own Argument Definitions
-            </a>
-          </h3>
-
-          <p>
-            I started wondering what would happen if I gave an LLM the command
-            definitions from an existing CLI instead of building another
-            AI-specific schema. Using ESKit and Python's
-            <code>argparse</code>, the experiment went further than I expected.
-          </p>
-
-          <div class="tags">
-            <span>AI</span>
-            <span>ESKit</span>
-            <span>Python</span>
-            <span>argparse</span>
-          </div>
-
-          <div class="links">
-            <a
-              class="primary"
-              href="/blog/eskit-ai-cli-helper.html"
-            >
-              Read article →
-            </a>
-          </div>
-        </article>
-      </section>
-    </div>
-
-    <footer class="footer">
-      <div class="footer-links">
+<body>
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/live.html">Live</a>
+        <a class="active" href="/blog.html">Blog</a>
         <a href="/about.html">About</a>
         <a href="/collaborate.html">Collaborate</a>
-        <a
-          href="https://github.com/damixen"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          GitHub
-        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <header class="hero-card">
+      <h1>Blog</h1>
+
+      <p class="subtitle">
+        Experiments, notes, and things I'm building.
+      </p>
+
+      <p class="intro">
+        A collection of experiments and notes around security engineering,
+        tooling, AI, and whatever I happen to be building.
+      </p>
+    </header>
+
+    <section class="card">
+      <div class="section-header">
+        <span class="status-dot"></span>
+        <h2>Latest</h2>
       </div>
 
-      <p class="footer-version">GingerPot 2026.08.3</p>
-    </footer>
-  </body>
+      <article class="project">
+        <p class="conference">
+          2026-08-23
+        </p>
+
+        <h3>
+          <a href="/blog/eskit-ai-cli-helper-2.html">
+            From AI CLI Helper to CLI-Centric Agent
+          </a>
+        </h3>
+
+        <p>
+          The next step in my ESKit AI experiment was turning Claude's tool
+          calls into actual CLI operations. The basic proof of concept worked,
+          but it also exposed an important difference between executing one
+          tool call and building a real agent loop.
+        </p>
+
+        <div class="tags">
+          <span>AI</span>
+          <span>Agents</span>
+          <span>ESKit</span>
+          <span>Claude</span>
+        </div>
+
+        <div class="links">
+          <a class="primary" href="/blog/eskit-ai-cli-helper-2.html">
+            Read article →
+          </a>
+        </div>
+      </article>
+
+      <article class="project">
+        <p class="conference">
+          2026-08-20
+        </p>
+
+        <h3>
+          <a href="/blog/eskit-ai-cli-helper.html">
+            Building an AI CLI Helper from the CLI's Own Argument Definitions
+          </a>
+        </h3>
+
+        <p>
+          I started wondering what would happen if I gave an LLM the command
+          definitions from an existing CLI instead of building another
+          AI-specific schema. Using ESKit and Python's
+          <code>argparse</code>, the experiment went further than I expected.
+        </p>
+
+        <div class="tags">
+          <span>AI</span>
+          <span>ESKit</span>
+          <span>Python</span>
+          <span>argparse</span>
+        </div>
+
+        <div class="links">
+          <a class="primary" href="/blog/eskit-ai-cli-helper.html">
+            Read article →
+          </a>
+        </div>
+      </article>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="/about.html">About</a>
+      <a href="/collaborate.html">Collaborate</a>
+      <a href="https://github.com/damixen" target="_blank" rel="noopener noreferrer">
+        GitHub
+      </a>
+    </div>
+
+    <p class="footer-version">GingerPot 2026.08.4</p>
+  </footer>
+
+</body>
+
 </html>

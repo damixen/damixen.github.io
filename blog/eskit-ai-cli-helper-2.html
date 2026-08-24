@@ -1,0 +1,1013 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta name="description"
+        content="The next step in the ESKit AI experiment: turning CLI definitions into LLM tools, converting tool calls back into argparse commands, and discovering why the agent loop and token optimization matter." />
+
+    <meta property="og:title" content="From AI Helper to CLI Agent: Turning Tool Calls Back into Commands" />
+    <meta property="og:description"
+        content="Exploring tool calls, argparse, agent loops, and token optimization in a CLI-centric AI architecture." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://gingerpot.damixen.com/ai-cli-agent.html" />
+
+    <title>From AI Helper to CLI Agent | GingerPot</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+
+    <link rel="icon" href="../favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="../favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+
+    <link rel="stylesheet" href="../css/style.css" />
+    ```
+
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/live.html">Live</a>
+                <a class="active" href="/blog.html">Blog</a>
+                <a href="/about.html">About</a>
+                <a href="/collaborate.html">Collaborate</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <p class="blog-next">
+            <strong>
+                Previous:
+                <a href="/blog/eskit-ai-cli-helper.html">
+                    Building an AI CLI Helper from the CLI's Own Argument Definitions ←
+                </a>
+            </strong>
+        </p>
+        <article class="blog-card">
+
+            <header class="blog-header">
+                <p class="blog-kicker">AI / CLI / ESKit</p>
+                <p>August 2026 · ESKit experiment</p>
+
+                <h1>
+                    From AI Helper to CLI Agent: Turning Tool Calls Back into Commands
+                </h1>
+
+                <p class="blog-meta">
+                    Tool calls, argparse, agent loops, and the beginning of token optimization
+                </p>
+            </header>
+
+            <section>
+                <p>
+                    In the previous entries, I experimented with giving Claude the
+                    command definitions from an existing CLI and using them as the
+                    context for an AI helper.
+                    The idea was deliberately simple: ESKit already had
+                    <code>argparse</code>, so instead of creating another AI-specific
+                    description of the CLI, I could turn the existing definitions
+                    into JSON and give that to the model.
+                </p>
+
+                <p>
+                    That worked well enough that I started wondering about the next
+                    step.
+                </p>
+
+                <blockquote>
+                    What if Claude could actually execute the commands?
+                </blockquote>
+
+                <p>
+                    This time I wanted to keep the same basic philosophy.
+                    I didn't want to build a completely separate execution layer
+                    just for the AI.
+                    The goal was to let the LLM produce a structured tool call,
+                    translate that tool call back into normal CLI arguments, and
+                    then let the existing ESKit command execute it.
+                </p>
+            </section>
+
+            <section>
+                <h2>Turning CLI Commands into Tools</h2>
+
+                <p>
+                    The first part was relatively straightforward.
+                    The command definitions I already had could be transformed
+                    into LLM tool definitions.
+                </p>
+
+                <pre><code>argparse
+    │
+    ▼
+Command JSON
+    │
+    ▼
+LLM Tool Definition
+    │
+    ▼
+Claude</code></pre>
+                <p>
+                    For example, the existing <code>index create</code> command
+                    could become a tool with an argument such as
+                    <code>index</code>.
+                </p>
+
+                <p>
+                    I could then ask:
+                </p>
+
+                <pre><code>eskit ai "Can you create an index called test-index?"</code></pre>
+
+                <p>
+                    Instead of Claude simply returning text describing the
+                    command, it produced a structured tool call:
+                </p>
+
+                <pre><code>ToolUseBlock(
+name='index_create',
+input={
+    'index': 'test-index'
+})</code></pre>
+
+                <p>
+                    That's an important change.
+                    The model wasn't just generating a command string.
+                    It was producing structured data that my program could
+                    inspect.
+                </p>
+            </section>
+
+            <section>
+                <h2>Tool Calls Can Become CLI Arguments</h2>
+
+                <p>
+                    The next question was how to get from that structured tool
+                    call back to the existing CLI.
+                </p>
+
+                <p>
+                    I introduced a small <code>ToolCall</code> representation:
+                </p>
+
+                <pre><code>@dataclass
+class ToolCall:
+    id: str
+    name: str
+    arguments: dict</code></pre>
+                <p>
+                    The adapter takes the tool name and arguments and finds the
+                    corresponding command definition.
+                </p>
+
+                <p>
+                    For example:
+                </p>
+
+                <pre><code>ToolCall(
+    name="repo_show",
+    arguments={
+        "name": "daily_repo"
+    }
+)</code></pre>
+
+                <p>
+                    becomes:
+                </p>
+
+                <pre><code>["repo", "show", "daily_repo"]</code></pre>
+
+                <p>
+                    And:
+                </p>
+
+                <pre><code>ToolCall(
+    name="cat",
+    arguments={
+        "kind": "index",
+        "json": True
+    }
+)</code></pre>
+                <p>
+                    becomes:
+                </p>
+
+                <pre><code>["cat", "index", "--json"]</code></pre>
+
+                <p>
+                    Finally, those arguments can be passed to the same
+                    <code>argparse</code> parser that a normal user would use.
+                </p>
+
+                <pre><code>Claude
+    │
+    ▼
+ToolCall
+    │
+    ▼
+CLI adapter
+    │
+    ▼
+["cat", "index", "--json"]
+    │
+    ▼
+argparse
+    │
+    ▼
+existing ESKit command</code></pre>
+                <p>
+                    This was the part I was particularly interested in.
+                    The AI doesn't need a second implementation of the command.
+                    It can use the CLI itself as the execution interface.
+                </p>
+            </section>
+
+            <section>
+                <h2>A Small Detail: Positional Arguments</h2>
+
+                <p>
+                    While implementing the adapter, I ran into a small but
+                    important detail.
+                    Not every argument has flags.
+                    A positional argument might be represented in the command
+                    definition like this:
+                </p>
+
+                <pre><code>{
+    "flags": [],
+    "name": "name",
+    "type": "str",
+    "required": true
+}</code></pre>
+
+                <p>
+                    While an optional argument might look like:
+                </p>
+
+                <pre><code>{
+    "flags": ["--json"],
+    "name": "json",
+    "type": "boolean",
+    "required": false,
+    "default": false
+}</code></pre>
+
+                <p>
+                    So the adapter needs to know whether an argument is
+                    positional or optional.
+                </p>
+
+                <p>
+                    I initially considered preserving all of the argparse flags
+                    in the AI-facing definition, but that creates another
+                    interesting optimization opportunity: the model doesn't
+                    necessarily need every representation detail that the CLI
+                    needs.
+                </p>
+
+                <p>
+                    The AI mostly needs to understand the argument's name,
+                    type, meaning, choices, and whether it is required.
+                    The CLI adapter can retain the knowledge of how that argument
+                    maps to actual flags.
+                </p>
+            </section>
+
+            <section>
+                <h2>The First Real Tool Calls</h2>
+
+                <p>
+                    Once the conversion was working, I started trying ordinary
+                    ESKit operations through the AI interface.
+                </p>
+
+                <p>
+                    A simple read operation worked:
+                </p>
+
+                <pre><code>eskit ai "Can you show me a detail of repository called daily_repo?"</code></pre>
+
+                <p>
+                    Claude produced:
+                </p>
+
+                <pre><code>ToolUseBlock(
+name='repo_show',
+input={
+    'name': 'daily_repo'
+})
+
+args: ['repo', 'show', 'daily_repo']</code></pre>
+
+                <p>
+                    Another example was asking for cached index information:
+                </p>
+
+                <pre><code>eskit ai "Can you show me the index from cache?"</code></pre>
+
+                <p>
+                    Claude selected the <code>cat</code> tool and supplied the
+                    appropriate positional value:
+                </p>
+
+                <pre><code>input={'kind': 'index'}
+
+args: ['cat', 'index']</code></pre>
+
+                <p>
+                    It also understood optional output formatting:
+                </p>
+
+                <pre><code>eskit ai "Can you show list of index from cache in json format?"</code></pre>
+
+                <pre><code>input={'kind': 'index', 'json': True}
+
+args: ['cat', 'index', '--json']</code></pre>
+
+                <p>
+                    At this point the proof of concept felt surprisingly solid.
+                </p>
+            </section>
+
+            <section>
+                <h2>It Can Execute Real Commands</h2>
+
+                <p>
+                    The next test was an operation that actually modifies
+                    Elasticsearch.
+                </p>
+
+                <pre><code>eskit ai "Can you create ai index called test-index2?"</code></pre>
+
+                <p>
+                    Claude produced a tool call equivalent to:
+                </p>
+
+                <pre><code>{'index': 'test-index2'}</code></pre>
+
+                <p>
+                    which became:
+                </p>
+
+                <pre><code>['index', 'create', 'test-index2']</code></pre>
+
+                <p>
+                    And ESKit executed it:
+                </p>
+
+                <pre><code>Index created successfully.</code></pre>
+
+                <p>
+                    I also tested a snapshot operation:
+                </p>
+
+                <pre><code>eskit ai "Can you create a snapshot named 2026.08.22 in daily_repo repository?"</code></pre>
+
+                <p>
+                    Claude represented the repository and snapshot name using
+                    the argument expected by the existing command:
+                </p>
+
+                <pre><code>{'name': 'daily_repo/2026.08.22'}</code></pre>
+                <p>
+                    which the adapter converted into:
+                </p>
+
+                <pre><code>['snap', 'create', 'daily_repo/2026.08.22']</code></pre>
+
+                <p>
+                    This was a nice milestone for the experiment.
+                    The AI wasn't just explaining ESKit anymore.
+                    It could use the existing CLI to perform an operation.
+                </p>
+            </section>
+
+            <section>
+                <h2>Then I Tried Multiple Operations</h2>
+
+                <p>
+                    This is where the difference between a tool call and an
+                    actual agent started becoming obvious.
+                </p>
+
+                <p>
+                    I asked Claude to perform several operations:
+                </p>
+
+                <pre><code>eskit ai "Can you set a host to HP-Local, pull latest cache, show me index from the cache?"</code></pre>
+
+                <p>
+                    Claude actually returned multiple tool calls:
+                </p>
+
+                <pre><code>
+ToolUseBlock(
+    name='host_set',
+    input={
+        'host': 'HP-Local'
+    }
+)
+
+ToolUseBlock(
+    name='pull',
+    input={
+        'host': 'HP-Local'
+    }
+)</code></pre>
+                <p>
+                    That was interesting because the model had clearly understood
+                    that there were multiple operations involved.
+                    But my implementation only executed the first tool call.
+                    That exposed the next architectural step.
+                </p>
+
+                <blockquote>
+                    A tool call isn't the same thing as an agent loop.
+                </blockquote>
+
+                <p>
+                    The model can request a tool, but if the application doesn't
+                    execute that tool, return the result to the model, and allow
+                    the model to continue, the interaction stops there.
+                </p>
+
+                <pre><code>
+  User
+    │
+    ▼
+Claude
+    │
+    ▼
+ToolCall
+    │
+    ▼
+Execute command
+    │
+    ▼
+Result
+    │
+    ▼
+Claude again
+    │
+    ▼
+Next ToolCall
+    │
+    ▼
+    ...
+    │
+    ▼
+Final response</code></pre>
+                <p>
+                    My current implementation only goes through the first part
+                    of that loop.
+                    In other words, I had built enough infrastructure for an
+                    agent, but I hadn't actually built the agent loop yet.
+                </p>
+            </section>
+
+            <section>
+                <h2>The Difference Between a Helper and an Agent</h2>
+
+                <p>
+                    This distinction made the architecture much clearer to me.
+                </p>
+
+                <p>
+                    A simple helper can do:
+                </p>
+
+                <pre><code>Question
+    │
+    ▼
+Claude
+    │
+    ▼
+Answer</code></pre>
+                <p>
+                    Or, with one executable operation:
+                </p>
+
+                <pre><code>Question
+    │
+    ▼
+Claude
+    │
+    ▼
+ToolCall
+    │
+    ▼
+Execute
+    │
+    ▼
+Exit</code></pre>
+                <p>
+                    An agent needs the loop:
+                </p>
+
+                <pre><code>Question
+    │
+    ▼
+Claude
+    │
+    ▼
+ToolCall
+    │
+    ▼
+Execute
+    │
+    ▼
+Tool result
+    │
+    ▼
+Claude
+    │
+    ├── another ToolCall ──► Execute ──► result ──┐
+    │                                             │
+    └─────────────────────────────────────────────┘
+    │
+    ▼
+Final answer</code></pre>
+                <p>
+                    That sounds obvious when written down, but seeing the
+                    behavior in a real CLI made the distinction much more
+                    concrete.
+                </p>
+            </section>
+
+            <section>
+                <h2>And Now Token Optimization Matters</h2>
+
+                <p>
+                    The other thing that became much more obvious once tool
+                    execution started working was the size of the context.
+                    My command description was around 55 KB.
+                    The model was receiving essentially the entire CLI
+                    description for every request.
+                </p>
+
+                <p>
+                    The actual tool calls were tiny.
+                    For example:
+                </p>
+
+                <pre><code>{"kind": "index"}</code></pre>
+
+                <p>
+                    But the model had to reason about thousands of lines of
+                    command definitions to produce that tiny result.
+                    I started looking at the command JSON more critically.
+                    There was a lot of information that was useful to
+                    <code>argparse</code> but didn't necessarily need to be sent
+                    to the LLM.
+                </p>
+            </section>
+
+            <section>
+                <h2>Optimization #1: Remove Redundant Information</h2>
+
+                <p>
+                    The first optimization is intentionally boring:
+                    don't send information the model doesn't need.
+                </p>
+
+                <p>
+                    For example, the command definition contains a lot of
+                    fields like:
+                </p>
+
+                <pre><code>{
+    "flags": [
+        "-v",
+        "--verbose"
+    ],
+    "name": "verbose",
+    "type": "boolean",
+    "required": false,
+    "default": false,
+    "choices": null,
+    "nargs": 0,
+    "description": "Enable verbose logging"
+}</code></pre>
+
+                <p>
+                    Some of these fields are useful to the parser, but not all
+                    of them are useful to Claude.
+                </p>
+
+                <p>
+                    In particular, values such as <code>null</code> are often
+                    just noise.
+                    If there are many arguments, repeatedly sending
+                    <code>"choices": null</code> doesn't add much information.
+                    Similarly, if an argument has the normal default for its
+                    type, there may be no reason to explicitly send that default.
+                </p>
+
+                <p>
+                    This is a simple optimization, but it is also the easiest
+                    one to apply because it doesn't change the semantics of
+                    anything.
+                </p>
+
+                <p>
+                    It's basically:
+                </p>
+
+                <blockquote>
+                    Remove what doesn't carry useful information.
+                </blockquote>
+            </section>
+
+            <section>
+                <h2>Optimization #1.5: Define Common Arguments Once</h2>
+
+                <p>
+                    The next optimization is slightly more interesting.
+                </p>
+
+                <p>
+                    ESKit has arguments that appear across many commands:
+                </p>
+
+                <ul>
+                    <li><code>--verbose</code></li>
+                    <li><code>--debug</code></li>
+                    <li><code>--json</code></li>
+                    <li><code>--config</code></li>
+                    <li><code>--host</code></li>
+                    <li><code>--view</code></li>
+                </ul>
+
+                <p>
+                    If the same definition appears in dozens of commands,
+                    sending the complete definition every time is redundant.
+                </p>
+
+                <p>
+                    Instead, I can define the argument once:
+                </p>
+
+                <pre><code>"common_arguments": {
+    "verbose": {
+        "type": "boolean",
+        "description": "Enable verbose logging"
+    },
+    "debug": {
+        "type": "boolean",
+        "description": "Enable debug logging"
+    },
+    "json": {
+        "type": "boolean",
+        "description": "Output in JSON format"
+    }
+}</code></pre>
+
+                <p>
+                    And then reference it from commands:
+                </p>
+
+                <pre><code>"commands": {
+"init": {
+    "arguments": [
+        "verbose",
+        "debug",
+        "json",
+        "demo"
+    ]
+},
+"host show": {
+    "arguments": [
+        "config",
+        "host",
+        "verbose",
+        "debug",
+        "json"
+    ]
+}}</code></pre>
+
+                <p>
+                    This is still a small change, but now the command
+                    representation is starting to look less like a raw dump of
+                    <code>argparse</code> and more like an intermediate
+                    representation designed for another stage.
+                </p>
+            </section>
+
+            <section>
+                <h2>The Compiler Analogy</h2>
+
+                <p>
+                    This is where I started thinking about the architecture
+                    differently.
+                </p>
+
+                <p>
+                    The JSON originally started as a dump of the argparse
+                    structure.
+                    But it is increasingly becoming something closer to an
+                    intermediate representation.
+                </p>
+
+                <pre><code>argparse
+    │
+    ▼
+Normalized command representation
+    │
+    ▼
+Optimization / projection
+    │
+    ▼
+Context-specific representation
+    │
+    ├──────────────► AI Helper
+    │
+    └──────────────► LLM Tool Definitions
+    │
+    ▼
+ToolCall
+    │
+    ▼
+CLI Adapter
+    │
+    ▼
+argparse
+    │
+    ▼
+Existing ESKit</code></pre>
+                <p>
+                    There are effectively two compilation directions here.
+                </p>
+
+                <p>
+                    The first is:
+                </p>
+
+                <pre><code>CLI → AI</code></pre>
+
+                <p>
+                    The existing CLI definition is transformed into a
+                    representation the LLM can understand.
+                </p>
+
+                <p>
+                    The second is:
+                </p>
+
+                <pre><code>AI → CLI</code></pre>
+
+                <p>
+                    A structured tool call is transformed back into the
+                    argument list expected by the existing CLI.
+                </p>
+
+                <p>
+                    I wasn't really thinking about this as a compiler when I
+                    started the project.
+                    It emerged naturally from trying to avoid duplicating the
+                    CLI implementation.
+                    And I like the analogy because it also gives the
+                    optimization work a useful name.
+                </p>
+
+                <p>
+                    Removing redundant fields, deduplicating common arguments,
+                    projecting only relevant commands, and eventually generating
+                    role-specific tool definitions all start to look like
+                    <strong>intermediate representation optimization</strong>.
+                </p>
+            </section>
+
+            <section>
+                <h2>Safety and Permissions Start to Matter More</h2>
+
+                <p>
+                    Another thing that became more important once the AI could
+                    actually execute commands was the metadata I experimented
+                    with in the previous post.
+                    For a helper that only answers questions, metadata such as
+                    <code>risk</code> and
+                    <code>requires_confirmation</code> improves the model's
+                    reasoning.
+                    Once the model can execute commands, that metadata becomes
+                    much more interesting.
+                </p>
+
+                <p>
+                    The system can potentially use it to decide which tools an
+                    agent is allowed to see and which operations require
+                    confirmation.
+                </p>
+
+                <pre><code>Tool definition
+│
+├── risk: read
+├── risk: write
+└── risk: destructive
+        │
+        ▼
+  Agent profile
+        │
+        ▼
+  Available tools</code></pre>
+
+                <p>
+                    For example, a read-only agent shouldn't necessarily receive
+                    destructive tools at all.
+                    That is different from telling the model:
+                    "please don't use this tool."
+                    The tool can simply not exist from that agent's perspective.
+                    That's a much more interesting direction for ESKit because
+                    it connects the AI experiment with a security concept:
+                    <strong>capability-based access to operations</strong>.
+                </p>
+            </section>
+
+            <section>
+                <h2>What I Have Now</h2>
+
+                <p>
+                    At this point, the proof of concept can do more than I
+                    originally expected.
+                </p>
+
+                <p>
+                    It can take an existing ESKit command definition, expose
+                    commands to Claude as tools, receive structured tool calls,
+                    translate those calls back into normal CLI arguments, and
+                    execute the existing ESKit command.
+                </p>
+
+                <p>
+                    Some examples are now as simple as:
+                </p>
+
+                <pre>
+<code>eskit ai "Can you pull cache?"
+eskit ai "Can you set a host to HP-Local?"
+eskit ai "Can you show me a detail of repository called daily_repo?"
+eskit ai "Can you create ai index called test-index2?"</code></pre>
+                <p>
+                    The AI can also combine operations conceptually and return
+                    multiple tool calls.
+                    My current implementation just doesn't complete the full
+                    loop yet.
+                </p>
+
+                <p>
+                    That makes the next step pretty clear.
+                </p>
+            </section>
+
+            <section>
+                <h2>What's Next?</h2>
+
+                <p>
+                    The next milestone is to complete the agent loop:
+                </p>
+
+                <pre><code>Claude
+    │
+    ▼
+ToolCall
+    │
+    ▼
+Execute
+    │
+    ▼
+Tool result
+    │
+    ▼
+Claude
+    │
+    ▼
+Next ToolCall
+    │
+    ▼
+   ...
+    │
+    ▼
+Final answer</code></pre>
+                <p>
+                    But before doing that, I want to spend some time reducing
+                    the amount of information being sent to the model.
+                    The command definition started at roughly 55 KB.
+                    There is no reason to assume that the LLM needs all of that
+                    information for every request.
+                </p>
+
+                <p>
+                    I want to explore a few simple optimizations first:
+                </p>
+
+                <ul>
+                    <li>remove redundant or empty properties</li>
+                    <li>omit information that can be inferred</li>
+                    <li>define common arguments once and reference them</li>
+                    <li>project only the relevant part of the command tree</li>
+                    <li>send only the tools needed for the current context</li>
+                </ul>
+
+                <p>
+                    After that, the full agent loop should be a much more
+                    interesting experiment.
+                </p>
+            </section>
+
+            <section>
+                <h2>From a Simple Helper to an Agent</h2>
+
+                <p>
+                    The interesting thing about this experiment is that I
+                    haven't really added much AI-specific functionality to
+                    ESKit.
+                    Most of the work has been adapting information that already
+                    existed.
+                </p>
+
+                <pre><code>Existing CLI
+    │
+    ▼
+argparse
+    │
+    ▼
+Normalized representation
+    │
+    ▼
+LLM tools
+    │
+    ▼
+Tool calls
+    │
+    ▼
+Existing CLI again</code></pre>
+                <p>
+                    The AI is effectively sitting between two representations
+                    of the same interface.
+                    That's what makes the approach appealing to me.
+                    I don't need to create an entirely new AI command system.
+                    I can keep improving the translation layer around the
+                    existing CLI.
+                </p>
+
+                <p>
+                    And now the project has a fairly natural progression:
+                    first an AI helper, then executable tool calls, then a
+                    complete agent loop, and eventually permission-aware
+                    agents.
+                    None of those steps requires ESKit to stop being a normal
+                    CLI.
+                </p>
+
+                <p class="blog-next">
+                    <strong>
+                        The next experiment: complete the tool-call loop and see
+                        what happens when Claude can execute a workflow instead
+                        of just one command.
+                    </strong>
+                </p>
+
+                <p>
+                    If you're interested in the experiment, the ESKit branch is here:
+                </p>
+
+                <p>
+                    <a href="https://github.com/damixen/eskit/tree/eskit-ai" target="_blank" rel="noopener noreferrer">
+                        ESKit — eskit-ai branch →
+                    </a>
+                </p>
+
+                <blockquote>
+                    This is part of an ongoing series of experiments exploring
+                    AI-assisted CLI interfaces and agent architectures in ESKit.
+                </blockquote>
+            </section>
+
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="/about.html">About</a>
+            <a href="/collaborate.html">Collaborate</a>
+            <a href="https://github.com/damixen" target="_blank" rel="noopener noreferrer">
+                GitHub
+            </a>
+        </div>
+
+        <p class="footer-version">GingerPot 2026.08.4</p>
+    </footer>
+
+</body>
+
+</html>
