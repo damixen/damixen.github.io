@@ -33,6 +33,7 @@ const portServices = {
   3389: "RDP",
   5000: "HTTP-Dev",
   5432: "PostgreSQL",
+  5060: "SIP",
   5900: "VNC",
   5985: "WinRM",
   6379: "Redis",
