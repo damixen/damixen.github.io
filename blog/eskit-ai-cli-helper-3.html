@@ -1,0 +1,476 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+
+    <meta name="description"
+        content="Refactoring ESKit to separate command execution from presentation, creating a cleaner boundary for CLI, AI, and future interfaces." />
+
+    <meta property="og:title" content="Separating Execution from Presentation in ESKit" />
+    <meta property="og:description"
+        content="A small ESKit refactoring that separates command execution from presentation and creates a cleaner boundary for AI agents." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://gingerpot.damixen.com/blog/eskit-execution-presentation.html" />
+
+    <title>Separating Execution from Presentation in ESKit | GingerPot</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+
+    <link rel="icon" href="../favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="../favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+
+    <link rel="stylesheet" href="../css/style.css" />
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/live.html">Live</a>
+                <a class="active" href="/blog.html">Blog</a>
+                <a href="/about.html">About</a>
+                <a href="/collaborate.html">Collaborate</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <p class="blog-next">
+            <strong>
+                Previous:
+                <a href="/blog/eskit-ai-cli-helper-2.html">
+                    Turning Tool Calls Back into Commands →
+                </a>
+            </strong>
+        </p>
+        <article class="blog-card">
+
+            <header class="blog-header">
+                <p class="blog-kicker">ESKit / Architecture / AI</p>
+                <p>August 2026 · ESKit refactoring</p>
+
+                <h1>
+                    Separating Execution from Presentation in ESKit
+                </h1>
+
+                <p class="blog-meta">
+                    A small refactoring that created a cleaner boundary for the AI loop
+                </p>
+            </header>
+
+            <section>
+                <p>
+                    While working on the AI helper for
+                    <a href="https://github.com/ttsujimoto/eskit" target="_blank" rel="noopener noreferrer">ESKit</a>,
+                    I ran into an architectural problem I wasn't originally looking for.
+                    The AI helper could already execute ESKit commands through tool
+                    calls. The next step was to make it behave more like an agent:
+                </p>
+
+                <pre><code>AI → tool call → execute → return result → AI → next tool call</code></pre>
+
+                <p>
+                    But before building that loop, I realized there was a problem
+                    with how the existing CLI handled results.
+                </p>
+            </section>
+
+            <section>
+                <h2>The CLI Was Doing Two Jobs</h2>
+
+                <p>
+                    ESKit commands are built around Python's
+                    <code>argparse</code>.
+                    The general flow looked roughly like this:
+                </p>
+
+                <pre><code>argparse
+    │
+    ▼
+cmd_<command>()
+    │
+    ▼
+ESKit core
+    │
+    ▼
+render()
+    │
+    ▼
+terminal</code></pre>
+                <p>
+                    That works well for a traditional CLI.
+                    For example, a command such as <code>show host</code> could
+                    call the core function, take the resulting data, apply the
+                    configured fields and views, and immediately render a table
+                    or JSON output.
+                </p>
+
+                <p>
+                    The command function knew how the result should be presented.
+                    But that becomes awkward when something other than the
+                    terminal wants the result.
+                    The AI doesn't really want a formatted table.
+                    It wants the actual structured result.
+                </p>
+
+                <p>
+                    A Web UI might want to turn the result into a different
+                    interface. An API might want to serialize it differently.
+                </p>
+
+                <p>
+                    So I started asking:
+                </p>
+
+                <blockquote>
+                    Why does the command itself need to know how the result will
+                    be presented?
+                </blockquote>
+            </section>
+
+            <section>
+                <h2>Separating Execution from Presentation</h2>
+
+                <p>
+                    I decided to move rendering out of the <code>cmd_*</code>
+                    functions.
+                    Instead of:
+                </p>
+
+                <pre><code>cmd_&lt;command&gt;
+│
+├── call core
+├── build rendering configuration
+├── project result
+├── render result
+└── return exit code</code></pre>
+
+                <p>
+                    the command becomes much simpler:
+                </p>
+
+                <pre><code>cmd_&lt;command&gt;
+    │
+    ▼
+ESKit core
+    │
+    ▼
+Result</code></pre>
+
+                <p>
+                    The <code>Result</code> object can then move upward to the
+                    main application layer.
+                </p>
+
+                <pre><code>argparse
+    │
+    ▼
+cmd_<command>
+    │
+    ▼
+ESKit core
+    │
+    ▼
+Result
+    │
+    ▼
+main()
+    ├── CLI → renderer
+    └── AI  → agent loop</code></pre>
+
+                <p>
+                    This means the command is primarily responsible for executing
+                    the operation and returning its result.
+                    It doesn't need to care whether the caller is a terminal,
+                    an AI agent, or something else.
+                </p>
+            </section>
+
+            <section>
+                <h2>The Result Becomes the Boundary</h2>
+
+                <p>
+                    This also gave me a better reason to make the
+                    <code>Result</code> object more useful.
+                    Conceptually, it contains things like:
+                </p>
+
+                <pre><code>class Result(Generic[T]):
+    code: ResultCode
+    message: str = ""
+    value: T | None = None
+    context: Any | None = None
+    command_context: Any | None = None</code></pre>
+
+                <p>
+                    The important part isn't the exact structure.
+                    The important part is that the result represents the outcome
+                    of the operation <strong>before presentation</strong>.
+                    For the normal CLI, <code>main()</code> can pass that result
+                    to the renderer.
+                </p>
+
+                <p>
+                    The renderer can use the command context to determine things
+                    such as:
+                </p>
+
+                <ul>
+                    <li>output format</li>
+                    <li>selected fields</li>
+                    <li>views</li>
+                    <li>projection</li>
+                    <li>table formatting</li>
+                    <li>JSON output</li>
+                </ul>
+
+                <p>
+                    The AI path doesn't need any of that.
+                    It can consume the structured result directly.
+                </p>
+            </section>
+
+            <section>
+                <h2>A Small Refactoring with a Bigger Effect</h2>
+
+                <p>
+                    One of my original <code>cmd_*</code> functions had quite a
+                    bit of rendering logic mixed into it.
+                </p>
+
+                <p>
+                    It would:
+                </p>
+
+                <ol>
+                    <li>load the command context</li>
+                    <li>call the core function</li>
+                    <li>build a field list</li>
+                    <li>normalize the projection</li>
+                    <li>call <code>render()</code></li>
+                    <li>return an exit code</li>
+                </ol>
+
+                <p>
+                    After the refactoring, the successful path is essentially:
+                </p>
+
+                <pre><code>result = get_host(context.host, context.config)
+result.command_context = context
+
+if result.code == ResultCode.SUCCESS:
+return result</code></pre>
+                <p>
+                    The command still has some error-specific handling for now.
+                    I'm not trying to redesign everything at once.
+                    But the important change is that successful results are no
+                    longer consumed by the renderer inside the command.
+                    They are returned.
+                    That sounds like a small change, but it creates a much
+                    cleaner boundary.
+                </p>
+            </section>
+
+            <section>
+                <h2>This Wasn't Really an AI Refactoring</h2>
+
+                <p>
+                    Interestingly, I don't think this change is specific to AI.
+                    If I had never added the AI helper, separating execution from
+                    presentation would still make sense.
+                </p>
+
+                <p>
+                    The AI experiment simply exposed the problem earlier.
+                    A command shouldn't necessarily care whether its result is
+                    going to become:
+                </p>
+
+                <pre><code>terminal table
+JSON API response
+AI tool result
+Web UI</code></pre>
+
+
+                <p>
+                    Those are presentation decisions.
+                    The command's job is to perform the operation and return
+                    what happened.
+                </p>
+            </section>
+
+            <section>
+                <h2>And Now the Agent Loop Looks Simpler</h2>
+
+                <p>
+                    This also makes the next architectural step much less
+                    intimidating.
+                    The agent loop I was thinking about initially looked like it
+                    might require special handling throughout ESKit.
+                    Now it can be much more straightforward:
+                </p>
+
+                <pre><code>User
+    │
+    ▼
+    AI
+    │
+    ▼
+Tool call
+    │
+    ▼
+ESKit command
+    │
+    ▼
+ESKit core
+    │
+    ▼
+Result
+    │
+    ▼
+    AI
+    │
+    ├── another tool call
+    │
+    ├── ask user
+    │
+    └── final response</code></pre>
+
+
+                <p>
+                    The AI layer doesn't need to understand how ESKit renders a
+                    table.
+                    It just needs the result.
+                    That gives me a much cleaner place to implement the agent
+                    loop.
+                </p>
+            </section>
+
+            <section>
+                <h2>One More Unexpected Benefit</h2>
+
+                <p>
+                    The refactoring also made me notice how repetitive the
+                    rendering code had become.
+                    Many <code>cmd_*</code> functions were doing variations of
+                    the same thing:
+                </p>
+
+                <pre><code>build fields
+    ↓
+normalize projection
+    ↓
+render</code></pre>
+                <p>
+                    Once that responsibility moved out of the commands, a lot
+                    of duplicated code disappeared.
+                    So even if the AI experiment stopped here, the refactoring
+                    would still be useful.
+                </p>
+
+                <p>
+                    That's probably my favorite kind of architectural change:
+                    one that was motivated by a new feature, but leaves the
+                    existing system cleaner even if the new feature doesn't work
+                    out.
+                </p>
+            </section>
+
+            <section>
+                <h2>What's Next?</h2>
+
+                <p>
+                    With this boundary in place, I feel much more comfortable
+                    moving forward with the AI architecture.
+                </p>
+
+                <p>
+                    Before completing the agent loop, though, there is another
+                    obvious problem:
+                </p>
+
+                <blockquote>
+                    The command description is too repetitive.
+                </blockquote>
+
+                <p>
+                    The current command JSON contains a lot of information that
+                    is repeated across commands:
+                </p>
+
+                <pre><code>--verbose
+--debug
+--json
+--view
+...</code></pre>
+                <p>
+                    There are also fields such as <code>null</code> values and
+                    other <code>argparse</code> details that aren't necessarily
+                    useful to the model.
+                </p>
+
+                <p>
+                    So the next step is probably some optimization of the command
+                    description itself.
+                    The goal isn't just to make the JSON smaller.
+                </p>
+
+                <p>
+                    It's to see how much of the CLI definition can be expressed
+                    more intelligently before sending it to the model.
+                    Then I can finally get back to the interesting part:
+                </p>
+
+                <p class="blog-next">
+                    <strong>
+                        Can this CLI actually become an agent?
+                    </strong>
+                </p>
+
+                <p>
+                    If you're interested in the experiment, the ESKit
+                    <code>eskit-ai</code> branch is here:
+                </p>
+
+                <p>
+                    <a href="https://github.com/damixen/eskit/tree/eskit-ai" target="_blank" rel="noopener noreferrer">
+                        ESKit — eskit-ai branch →
+                    </a>
+                </p>
+
+                <blockquote>
+                    This is part of an ongoing series of experiments exploring
+                    AI-assisted CLI interfaces and agent architectures in ESKit.
+                </blockquote>
+            </section>
+
+        </article>
+
+    </main>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="/about.html">About</a>
+            <a href="/collaborate.html">Collaborate</a>
+            <a href="https://github.com/damixen" target="_blank" rel="noopener noreferrer">
+                GitHub
+            </a>
+        </div>
+
+        <p class="footer-version">GingerPot 2026.08.5</p>
+    </footer>
+
+
+</body>
+
+</html>
