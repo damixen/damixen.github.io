@@ -1,13 +1,70 @@
 :root {
+  /* ==========================================
+     Dark Theme
+     ========================================== */
+
   --bg: #0f1115;
   --card: #171b22;
   --border: #2a313c;
-  --text: #dfe6ee;
-  --muted: #97a2b2;
+
+  /* Text hierarchy */
+  --text: #f0f3f7;
+  --muted: #aeb7c3;
+
   --accent: #5ac8fa;
+  --accent-text: #08131b;
+
   --control-card: #202733;
   --control-border: #344050;
+
+  --code-bg: #11151b;
+  --nav-bg: rgba(15, 17, 21, 0.95);
+
+  --shadow: rgba(0, 0, 0, 0.4);
+
+  --tag-bg: rgba(90, 200, 250, 0.12);
+  --tag-border: rgba(90, 200, 250, 0.3);
+
+  --error: #ff8a8a;
+
+  color-scheme: dark light;
 }
+
+/* ==========================================
+   Light Theme
+   ========================================== */
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --border: #d5dae2;
+
+    /* Text hierarchy */
+    --text: #202731;
+    --muted: #596575;
+
+    --accent: #0077b6;
+    --accent-text: #ffffff;
+
+    --control-card: #eef2f6;
+    --control-border: #c8d0db;
+
+    --code-bg: #eef1f5;
+    --nav-bg: rgba(255, 255, 255, 0.95);
+
+    --shadow: rgba(0, 0, 0, 0.12);
+
+    --tag-bg: rgba(0, 119, 182, 0.08);
+    --tag-border: rgba(0, 119, 182, 0.25);
+
+    --error: #b42318;
+  }
+}
+
+/* ==========================================
+   General
+   ========================================== */
 
 * {
   box-sizing: border-box;
@@ -26,6 +83,10 @@ body {
   margin: 0 auto;
   padding: 24px;
 }
+
+/* ==========================================
+   Cards
+   ========================================== */
 
 .card {
   background: var(--card);
@@ -54,6 +115,10 @@ body {
   border: 2px solid var(--border);
 }
 
+/* ==========================================
+   Live Badge
+   ========================================== */
+
 .live-badge {
   display: flex;
   justify-content: center;
@@ -65,9 +130,13 @@ body {
   height: 8px;
 }
 
+/* ==========================================
+   Primary Links
+   ========================================== */
+
 .links .primary {
   background: var(--accent);
-  color: #08131b;
+  color: var(--accent-text);
   border-color: var(--accent);
   font-weight: 600;
 }
@@ -77,19 +146,37 @@ body {
   border-color: var(--accent);
 }
 
-/* ---------- Typography ---------- */
+/* ==========================================
+   Typography
+   ========================================== */
 
 h1 {
   margin: 0;
   font-size: 2.4rem;
+  color: var(--text);
 }
 
 h2 {
   margin-top: 0;
+  color: var(--text);
 }
 
 h3 {
   margin-top: 24px;
+  color: var(--text);
+}
+
+/* Main content */
+
+p {
+  color: var(--text);
+}
+
+/* Secondary introductory text */
+
+.intro {
+  color: var(--muted);
+  margin-bottom: 20px;
 }
 
 .subtitle {
@@ -98,16 +185,9 @@ h3 {
   margin: 8px 0 18px;
 }
 
-.intro,
-p {
-  color: var(--muted);
-}
-
-.intro {
-  margin-bottom: 20px;
-}
-
-/* ---------- Links ---------- */
+/* ==========================================
+   Links
+   ========================================== */
 
 .links {
   display: flex;
@@ -122,17 +202,16 @@ p {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 14px;
+  white-space: normal;
 }
 
 .links a:hover {
   border-color: var(--accent);
 }
 
-.links a {
-  white-space: normal;
-}
-
-/* ---------- Section Header ---------- */
+/* ==========================================
+   Section Header
+   ========================================== */
 
 .section-header {
   display: flex;
@@ -152,7 +231,9 @@ p {
   border-radius: 50%;
 }
 
-/* ---------- Statistics ---------- */
+/* ==========================================
+   Statistics
+   ========================================== */
 
 .stats {
   display: flex;
@@ -168,6 +249,7 @@ p {
 .number {
   font-size: 1.8rem;
   font-weight: 600;
+  color: var(--text);
 }
 
 .label {
@@ -175,7 +257,9 @@ p {
   font-size: 0.9rem;
 }
 
-/* ---------- Dashboard Tables ---------- */
+/* ==========================================
+   Dashboard Tables
+   ========================================== */
 
 .dashboard-table {
   width: 100%;
@@ -193,28 +277,29 @@ p {
 
 .dashboard-table td {
   padding: 8px;
+  color: var(--text);
   border-bottom: 1px solid var(--border);
 }
 
-/* ---------- Status Messages ---------- */
+/* ==========================================
+   Status Messages
+   ========================================== */
 
 .status-note {
   color: var(--muted);
-
   font-size: 0.75rem;
-
   font-family: "JetBrains Mono", monospace;
-
   opacity: 0.8;
-
   margin: 12px 0 0;
 }
 
 .status-note.error {
-  color: #ff8a8a;
+  color: var(--error);
 }
 
-/* ---------- Sparkline ---------- */
+/* ==========================================
+   Sparkline
+   ========================================== */
 
 .chart-wrapper {
   height: 160px;
@@ -223,39 +308,32 @@ p {
 
 #sparkline {
   width: 100%;
-
   height: 100%;
 }
 
 .sparkline-line {
   fill: none;
-
   stroke: var(--accent);
-
   stroke-width: 2;
-
   stroke-linejoin: round;
-
   stroke-linecap: round;
 }
 
 .axis {
   stroke: var(--border);
-
   stroke-width: 1;
 }
 
 .x-label {
   text-align: center;
-
   color: var(--muted);
-
   font-size: 0.8rem;
-
   margin-top: 8px;
 }
 
-/* ---------- Tags ---------- */
+/* ==========================================
+   Tags
+   ========================================== */
 
 .tags {
   display: flex;
@@ -265,11 +343,12 @@ p {
 }
 
 .tags span {
-  background: rgba(90, 200, 250, 0.12);
-  border: 1px solid rgba(90, 200, 250, 0.3);
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
   border-radius: 999px;
   padding: 4px 10px;
   font-size: 0.9rem;
+  color: var(--text);
 }
 
 .tag-list {
@@ -286,9 +365,12 @@ p {
   font-family: "JetBrains Mono", monospace;
   font-size: 0.85rem;
   border: 1px solid var(--border);
+  color: var(--text);
 }
 
-/* ---------- Projects ---------- */
+/* ==========================================
+   Projects
+   ========================================== */
 
 .project {
   margin-top: 24px;
@@ -297,18 +379,19 @@ p {
 .conference {
   margin-bottom: 12px;
   font-family: "JetBrains Mono", monospace;
+  color: var(--text);
 }
 
-/* ---------- Navigation ---------- */
+/* ==========================================
+   Navigation
+   ========================================== */
 
 .navbar {
   position: sticky;
-
   top: 0;
-
   z-index: 100;
 
-  background: rgba(15, 17, 21, 0.95);
+  background: var(--nav-bg);
 
   border-bottom: 1px solid var(--border);
 
@@ -333,9 +416,7 @@ p {
 
 .nav-links a {
   color: var(--muted);
-
   text-decoration: none;
-
   transition: 0.2s;
 }
 
@@ -344,13 +425,13 @@ p {
   color: var(--text);
 }
 
-/* ---------- Footer ---------- */
+/* ==========================================
+   Footer
+   ========================================== */
 
 .footer {
   text-align: center;
-
   color: var(--muted);
-
   margin: 48px 0 24px;
 }
 
@@ -366,7 +447,6 @@ p {
 
 .footer-links a {
   color: var(--muted);
-
   text-decoration: none;
 }
 
@@ -382,7 +462,9 @@ p {
   font-family: "JetBrains Mono", monospace;
 }
 
-/* ---------- Buttons ---------- */
+/* ==========================================
+   Buttons
+   ========================================== */
 
 button {
   background: transparent;
@@ -408,20 +490,21 @@ button:hover {
 
 button:disabled {
   opacity: 0.5;
-
   cursor: not-allowed;
 }
 
+/* ==========================================
+   Dashboard / Charts
+   ========================================== */
+
 .grid {
   stroke: var(--border);
-
   stroke-width: 1;
-
   opacity: 0.5;
 }
 
 .sparkline-fill {
-  fill: rgba(90, 200, 250, 0.08);
+  fill: var(--tag-bg);
 }
 
 .sparkline-point {
@@ -430,25 +513,33 @@ button:disabled {
 
 .axis-label {
   fill: var(--muted);
-
   font-size: 11px;
-
   font-family: "JetBrains Mono", monospace;
 }
 
+/* ==========================================
+   Architecture / Code
+   ========================================== */
+
 .architecture {
-  background: #11151b;
+  background: var(--code-bg);
+
   border: 1px solid var(--border);
+
   border-radius: 8px;
+
   padding: 16px;
+
   color: var(--text);
+
   font-family: "JetBrains Mono", monospace;
+
   overflow-x: auto;
 }
 
-.section-header h2 {
-  margin: 0;
-}
+/* ==========================================
+   Feed Controls
+   ========================================== */
 
 .feed-controls {
   display: flex;
@@ -484,6 +575,7 @@ button:disabled {
 .feed-meta {
   margin-top: 1.5rem;
   padding-top: 1rem;
+
   border-top: 1px solid var(--border);
 
   display: flex;
@@ -494,6 +586,10 @@ button:disabled {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+/* ==========================================
+   Live Toolbar
+   ========================================== */
 
 .live-toolbar {
   background: var(--card);
@@ -507,9 +603,10 @@ button:disabled {
   z-index: 20;
 
   background: var(--control-card);
+
   border-color: var(--control-border);
 
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 20px var(--shadow);
 
   padding-bottom: 12px;
 }
@@ -545,7 +642,10 @@ button:disabled {
   display: flex;
 }
 
-/* Pin */
+/* ==========================================
+   Pin
+   ========================================== */
+
 .pin-option {
   margin-left: auto;
 
@@ -568,6 +668,7 @@ button:disabled {
 /* ==========================================
    Desktop Enhancement
    ========================================== */
+
 @media (min-width: 768px) {
   .control-group:last-child {
     grid-column: span 2;
@@ -579,6 +680,7 @@ button:disabled {
    ========================================== */
 
 @media (max-width: 768px) {
+
   /* ---------- General Layout ---------- */
 
   .container {
@@ -699,11 +801,10 @@ button:disabled {
 
   .status-note {
     font-size: 0.7rem;
-
     margin-top: 8px;
   }
 
-  /* Report mode */
+  /* ---------- Report Mode ---------- */
 
   .radio-group {
     display: flex;
@@ -711,14 +812,14 @@ button:disabled {
     gap: 16px;
   }
 
-  /* Button */
+  /* ---------- Button ---------- */
 
   .feed-controls button {
     width: 100%;
     min-height: 38px;
   }
 
-  /* Status message */
+  /* ---------- Status Message ---------- */
 
   .feed-status {
     grid-column: 1 / -1;
@@ -755,41 +856,69 @@ button:disabled {
   }
 }
 
-/* ---------- Blog Articles ---------- */
+/* ==========================================
+   Blog Articles
+   ========================================== */
 
 .blog-card {
   background: var(--card);
+
   border: 1px solid var(--border);
+
   border-radius: 14px;
+
   padding: 48px;
+
   margin-bottom: 24px;
 }
 
 .blog-header {
   margin-bottom: 48px;
   padding-bottom: 32px;
+
   border-bottom: 1px solid var(--border);
 }
 
 .blog-kicker {
   color: var(--accent);
+
   font-family: "JetBrains Mono", monospace;
+
   font-size: 0.85rem;
+
   text-transform: uppercase;
+
   letter-spacing: 0.08em;
+
   margin-bottom: 12px;
 }
 
 .blog-header h1 {
   max-width: 850px;
+
   font-size: 2.4rem;
+
   line-height: 1.25;
 }
 
 .blog-meta {
   margin-top: 16px;
+
   color: var(--muted);
+
   font-size: 0.9rem;
+}
+
+/* Main blog content */
+
+.blog-card p {
+  color: var(--text);
+}
+
+.blog-card ul,
+.blog-card ol {
+  color: var(--text);
+  padding-left: 24px;
 }
 
 .blog-card section {
@@ -811,22 +940,35 @@ button:disabled {
 
 .blog-card blockquote {
   margin: 24px 0;
+
   padding: 16px 20px;
+
   border-left: 3px solid var(--accent);
-  background: #11151b;
+
+  background: var(--code-bg);
+
   color: var(--text);
 }
 
 .blog-card pre {
   margin: 24px 0;
+
   padding: 20px;
-  background: #11151b;
+
+  background: var(--code-bg);
+
   border: 1px solid var(--border);
+
   border-radius: 8px;
+
   overflow-x: auto;
+
   color: var(--text);
+
   font-family: "JetBrains Mono", monospace;
+
   font-size: 0.85rem;
+
   line-height: 1.6;
 }
 
@@ -835,18 +977,23 @@ button:disabled {
   font-size: 0.9em;
 }
 
-.blog-card ul {
-  color: var(--muted);
-  padding-left: 24px;
-}
-
 .blog-next {
   margin-top: 32px;
+
   padding: 20px;
+
   border: 1px solid var(--border);
+
   border-radius: 8px;
-  background: #11151b;
+
+  background: var(--code-bg);
+
+  color: var(--text);
 }
+
+/* ==========================================
+   Blog Mobile
+   ========================================== */
 
 @media (max-width: 768px) {
   .blog-card {
