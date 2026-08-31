@@ -872,11 +872,33 @@ button:disabled {
   margin-bottom: 24px;
 }
 
+.series {
+  margin: 0 0 8px 0;
+  color: var(--accent);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.series+h3 {
+  margin-top: 0;
+}
+
 .blog-header {
   margin-bottom: 48px;
   padding-bottom: 32px;
 
   border-bottom: 1px solid var(--border);
+}
+
+.blog-header .series {
+  margin: 0 0 12px 0;
+  color: var(--accent);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .blog-kicker {
@@ -1011,5 +1033,9 @@ button:disabled {
   .blog-card pre {
     padding: 14px;
     font-size: 0.75rem;
+  }
+
+  .series {
+    font-size: 0.95rem;
   }
 }
