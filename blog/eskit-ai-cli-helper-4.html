@@ -1,0 +1,625 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta name="description"
+        content="Reducing ESKit's AI-facing CLI definition from roughly 25K to 7K input tokens without changing the underlying CLI definitions." />
+
+    <meta property="og:title" content="From 25K to 7K Tokens: Simplifying the CLI Definition Without Losing Context" />
+    <meta property="og:description"
+        content="How simple transformation passes reduced ESKit's AI-facing CLI definition from roughly 25K to 7K input tokens without changing the source CLI definitions." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://gingerpot.damixen.com/blog/eskit-ai-cli-token-optimization.html" />
+
+    <title>From 25K to 7K Tokens: Simplifying the CLI Definition Without Losing Context | GingerPot</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+
+    <link rel="icon" href="../favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="../favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+
+    <link rel="stylesheet" href="../css/style.css" />
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/live.html">Live</a>
+                <a class="active" href="/blog.html">Blog</a>
+                <a href="/about.html">About</a>
+                <a href="/collaborate.html">Collaborate</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+
+        <p class="blog-next">
+            <strong>
+                Previous:
+                <a href="/blog/eskit-ai-cli-helper-3.html">
+                    Separating Execution from Presentation in ESKit →
+                </a>
+            </strong>
+        </p>
+
+        <article class="blog-card">
+
+            <header class="blog-header">
+
+                <p class="series">
+                    Transforming a CLI into an AI-Native CLI
+                </p>
+
+                <p class="blog-kicker">ESKit / AI / Token Optimization</p>
+                <p>August 2026 · ESKit experiment</p>
+
+                <h1>
+                    From 25K to 7K Tokens: Simplifying the CLI Definition Without Losing Context
+                </h1>
+
+                <p class="blog-meta">
+                    Reducing AI context without changing the source CLI definition
+                </p>
+
+            </header>
+
+            <section>
+
+                <p>
+                    After getting the basic AI CLI helper working and turning
+                    Claude's tool calls into actual ESKit commands, I started
+                    looking at something I had mostly ignored until then:
+                    <strong>how much information I was actually sending to the model.</strong>
+                    The first version of my AI interface passed a fairly complete
+                    representation of ESKit's CLI command definitions to Claude.
+                    This made sense initially because the CLI already had all of the
+                    information needed to describe its commands, arguments,
+                    options, and subcommands.
+                </p>
+                <p>
+                    But the resulting representation was about
+                    <strong>55 KB</strong>, and the request consumed roughly
+                    <strong>25,000 input tokens</strong>.
+                    It's much more than I used in the other AI experiment I was doing for ESKit by giving them a
+                    separate tools definitions...
+                    So I started feeling like it was unnecessarily expensive — basically throwing coins at the model every time I executed something.
+                </p>
+
+                <p>
+                    However, I didn't want to create a second, AI-specific definition of
+                    the CLI, though. One idea behind this experiment was that the
+                    CLI's existing argument definitions should remain the source
+                    of truth.
+                </p>
+
+                <p>
+                    So instead of changing the CLI definitions, I thought it would be fairly trivial to reduce the
+                    definitions without coming up with anything complex before sending them to the AI.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>The source definition stays unchanged</h2>
+
+                <p>
+                    I wasn't trying to make the actual ESKit CLI definition
+                    smaller. The <code>argparse</code> definitions are still the
+                    definitions ESKit uses. They need to contain whatever
+                    information the CLI needs in order to parse and execute
+                    commands.
+                    Instead, I introduced a separate transformation step:
+                </p>
+
+                <pre><code>CLI definition
+      │
+      ▼
+transformation passes
+      │
+      ▼
+AI-facing CLI definition
+      │
+      ▼
+Claude</code></pre>
+
+                <p>
+                    The original definition remains untouched.
+                    This also meant I didn't have to maintain two schemas and
+                    worry about them getting out of sync.
+                    The AI representation is simply a <strong>derived view of the CLI</strong>.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Removing information the AI doesn't need</h2>
+
+                <p>
+                    The first pass is simple.
+                </p>
+
+                <p>
+                    Some fields in the generated command definition were useful
+                    internally but didn't provide much value to Claude.
+                    For example, <code>nargs</code> was one of the fields I could
+                    remove.
+                    There were also many <code>None</code> values and empty
+                    command collections that didn't add useful information to
+                    the description.
+                </p>
+
+                <p>
+                    So I introduced a small <code>CommandPass</code> abstraction
+                    and made the first pass responsible for removing these
+                    fields.
+                </p>
+
+                <p>Conceptually:</p>
+
+                <p><strong>Before:</strong></p>
+
+                <pre><code>{
+    "name": "index_create",
+    "nargs": null,
+    "help": "...",
+    "commands": {},
+    ...
+}</code></pre>
+
+                <p><strong>After:</strong></p>
+
+                <pre><code>{
+    "name": "index_create",
+    "help": "...",
+    ...
+}</code></pre>
+
+                <p>
+                    Nothing about the actual CLI changed.
+                    It just removed information from the representation being
+                    sent to Claude.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Removing duplicated common arguments</h2>
+
+                <p>
+                    The bigger opportunity came from looking at the CLI's common
+                    arguments.
+                </p>
+
+                <p>
+                    Options such as:
+                </p>
+
+                <pre><code>--host
+--config
+--json
+--view
+--fields
+--verbose
+--debug
+--dry-run</code></pre>
+
+                <p>
+                    were appearing repeatedly throughout the command hierarchy.
+                </p>
+
+                <p>
+                    From the CLI's perspective, that's perfectly reasonable.
+                    Each command needs to know which arguments it accepts.
+                    But from the AI's perspective, repeatedly describing the same
+                    argument definitions is redundant.
+                    So I added another pass:
+                    <code>DeduplicateCommonArgs</code>.
+                </p>
+
+                <p>
+                    Instead of keeping the same definition attached to every
+                    command, the pass extracts common arguments and places them
+                    in a shared <code>common_arguments</code> section.
+                </p>
+
+                <p>
+                    For example, conceptually, the original representation might
+                    look like this:
+                </p>
+
+                <p><strong>Before:</strong></p>
+
+                <pre><code>command A
+ ├── --host
+ │    ├── description
+ │    └── ...
+ ├── --json
+ │    ├── description
+ │    └── ...
+ └── --verbose
+      ├── description
+      └── ...
+
+command B
+ ├── --host
+ │    ├── description
+ │    └── ...
+ ├── --json
+ │    ├── description
+ │    └── ...
+ └── --verbose
+      ├── description
+      └── ...
+
+command C
+ ├── --host
+ │    ├── description
+ │    └── ...
+ ├── --json
+ │    ├── description
+ │    └── ...
+ └── --verbose
+      ├── description
+      └── ...</code></pre>
+
+                <p>
+                    The definitions of those common arguments are repeated for
+                    every command.
+                </p>
+
+                <p>
+                    After the transformation, the common argument definitions
+                    are moved into a shared section, while each command keeps a
+                    reference to the arguments it supports:
+                </p>
+
+                <p><strong>After:</strong></p>
+
+                <pre><code>common_arguments
+ ├── host
+ │    ├── description
+ │    └── ...
+ ├── json
+ │    ├── description
+ │    └── ...
+ └── verbose
+      ├── description
+      └── ...
+
+command A
+ └── common_args: [host, json, verbose, ...]
+
+command B
+ └── common_args: [host, json, verbose, ...]
+
+command C
+ └── common_args: [host, json, verbose, ...]</code></pre>
+
+                <p>
+                    The important difference is that the
+                    <strong>argument definitions themselves are no longer repeated.</strong>
+                    The commands still tell the AI which common arguments are
+                    available, while the actual descriptions and other metadata
+                    appear only once.
+                </p>
+
+                <p>
+                    From the model's perspective, the necessary context is still
+                    there. It just doesn't have to be serialized repeatedly.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>The pass architecture</h2>
+
+                <p>
+                    I wanted these transformations to stay independent rather
+                    than putting a growing collection of special cases into the
+                    code that generates the command definition.
+                </p>
+
+                <p>
+                    So I made each transformation a <code>CommandPass</code>:
+                </p>
+
+                <pre><code>class CommandPass:
+    def apply(self, command):
+        raise NotImplementedError</code></pre>
+
+                <p>
+                    Each pass takes a command definition and returns another
+                    command definition.
+                </p>
+
+                <p>
+                    The passes can then be chained:
+                </p>
+
+                <pre><code>result = run_passes(command, [
+    RemoveUnnecessaryFields(),
+    DeduplicateCommonArgs(),
+])</code></pre>
+
+                <p>
+                    The important part isn't the abstraction itself. It gives me
+                    a place to add future transformations.
+                    If I discover another piece of information that doesn't need
+                    to be sent to the model, I can add another pass without
+                    changing the original CLI definition.
+                    Maybe I can add a pass to remove commands that I don't want AI to know depending on
+                    host configurations or user configurations.
+                </p>
+
+                <p>
+                    The pipeline becomes a kind of boundary between the
+                    <strong>complete representation needed by the CLI</strong>
+                    and the <strong>smaller representation needed by the AI</strong>.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>25K tokens became about 7K</h2>
+
+                <p>
+                    After applying the transformations, the representation
+                    dropped from roughly <strong>55 KB to 17 KB</strong>.
+                    More importantly, the input context dropped from about
+                    <strong>25,000 tokens to roughly 7,000 tokens</strong>.
+                </p>
+
+                <p>
+                    That's around a <strong>72% reduction in input tokens</strong>:
+                </p>
+                <ul>
+                    <li>I didn't change the underlying CLI.</li>
+                    <li>I didn't introduce a new schema.</li>
+                    <li>I didn't implement a sophisticated compression technique.</li>
+                </ul>
+                <p>
+                    I simply removed information that wasn't useful to the model
+                    and eliminated repeated definitions.
+                    That was a huge gain and useful lesson.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Less context doesn't necessarily mean less capability</h2>
+
+                <p>
+                    One concern I had when removing information was whether Claude
+                    would still understand the CLI well enough to use it.
+                    After all, I initially sent so much information because I
+                    wanted to make sure the model had enough context to construct
+                </p>
+
+                <p>
+                    But the optimized representation still worked.
+                    In fact, this reinforced something I had already started
+                    noticing during the earlier experiments:
+                    <strong>the model doesn't necessarily benefit from seeing
+                        everything available to the application.</strong>
+                    It needs the information relevant to the task.
+                </p>
+
+                <p>
+                    This is particularly important when the context is describing
+                    an existing interface. The complete internal representation
+                    may be useful to the program, but that doesn't mean it is the
+                    best representation for an LLM.
+                </p>
+
+                <p>
+                    I asked Claude the same questions I asked in 
+                    <a href="/blog/eskit-ai-cli-helper.html">
+                        Part 1
+                    </a>.
+                    And the results are very much similar and satisfying.
+                    <br>
+                    <a href="https://github.com/damixen/eskit/tree/eskit-ai/ai-model-tests/2026-08-29_203141" target="_blank">
+                        Test Result with optimized command definitions.
+                    </a>.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>The CLI remains the source of truth</h2>
+
+                <p>
+                    This ended up being the part of the design I liked the most.
+                    I didn't want ESKit to become:
+                </p>
+
+                <pre><code>CLI definition
+AI definition
+     ↑
+"Please keep these synchronized"</code></pre>
+
+                <p>
+                    Instead, it became:
+                </p>
+
+                <pre><code>        argparse definitions
+                  │
+          ┌───────┴───────┐
+          │               │
+          ▼               ▼
+       CLI use      AI transformation
+                          │
+                          ▼
+                    AI-facing view</code></pre>
+
+                <p>
+                    The AI interface is generated from the same definitions that
+                    power the CLI.
+                    That means adding a new command or argument to ESKit doesn't
+                    require me to manually update another AI-specific schema.
+                    The AI layer can keep deriving its understanding of the CLI
+                    from the CLI itself.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>What I learned</h2>
+
+                <p>
+                    This optimization was a relatively small engineering change,
+                    but it changed how I think about giving context to an AI
+                    system.
+                </p>
+
+                <p>
+                    My initial instinct was essentially:
+                </p>
+
+                <blockquote>
+                    Give the model everything. More information should make it
+                    more capable.
+                </blockquote>
+
+                <p>
+                    The experiment suggested something more nuanced:
+                </p>
+
+                <blockquote>
+                    <strong>Give the model the information it needs, not
+                        necessarily all the information the application has.</strong>
+                </blockquote>
+
+                <p>
+                    The difference matters when the interface becomes large.
+                </p>
+
+                <p>
+                    In my case, a few straightforward transformations reduced the
+                    context from roughly 25K tokens to 7K while keeping the same
+                    underlying CLI definitions and preserving the information
+                    Claude needed to work with ESKit.
+                </p>
+
+                <p>
+                    The <code>CommandPass</code> architecture also gives me a
+                    useful place to continue experimenting without coupling those
+                    optimizations to the CLI itself.
+                </p>
+
+                <p>
+                    And that separation may become increasingly important as the
+                    AI interface becomes more capable.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>What's next?</h2>
+
+                <p>
+                    At this point, the AI helper could understand the CLI and
+                    turn Claude's tool calls back into real ESKit commands.
+                    But there was still an important limitation.
+                </p>
+                <p>
+                    The interaction was essentially:
+                </p>
+
+                <pre><code>User
+  ↓
+Claude
+  ↓
+Tool call
+  ↓
+ESKit command
+  ↓
+Result
+  ↓
+Claude</code></pre>
+
+                <p>
+                    For simple requests, that was enough.
+                    But what happens when a request requires several operations?
+                </p>
+
+                <p>
+                    For example:
+                </p>
+
+                <blockquote>
+                    "Check the health of host X and tell me if anything looks wrong."
+                </blockquote>
+
+                <p>
+                    Claude might need to check the host, retrieve the latest
+                    cache, inspect index health, look at repositories, and then
+                    reason about the results.
+                    That requires more than a single tool call.
+                </p>
+
+                <p>
+                    It requires an <strong>agent loop</strong>.
+                </p>
+
+                <p>
+                    That became the next step in the ESKit experiment.
+                </p>
+
+            </section>
+
+            <section>
+
+                <p>
+                    <a href="https://github.com/damixen/eskit/tree/eskit-ai" target="_blank" rel="noopener noreferrer">
+                        ESKit — eskit-ai branch →
+                    </a>
+                </p>
+
+                <blockquote>
+                    This is part of an ongoing series of experiments exploring
+                    AI-assisted CLI interfaces and agent architectures in ESKit.
+                </blockquote>
+
+            </section>
+
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="/about.html">About</a>
+            <a href="/collaborate.html">Collaborate</a>
+            <a href="https://github.com/damixen" target="_blank" rel="noopener noreferrer">
+                GitHub
+            </a>
+        </div>
+
+        <p class="footer-version">GingerPot 2026.08.5</p>
+    </footer>
+
+</body>
+
+</html>
