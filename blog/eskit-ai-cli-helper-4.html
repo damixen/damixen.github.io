@@ -28,6 +28,8 @@
     <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
 
     <link rel="stylesheet" href="../css/style.css" />
+
+    <script type="module" src="/js/mermaid.js"></script>
 </head>
 
 <body>
@@ -50,7 +52,7 @@
             <strong>
                 Previous:
                 <a href="/blog/eskit-ai-cli-helper-3.html">
-                    Separating Execution from Presentation in ESKit →
+                    ← Separating Execution from Presentation in ESKit
                 </a>
             </strong>
         </p>
@@ -95,7 +97,8 @@
                     <strong>25,000 input tokens</strong>.
                     It's much more than I used in the other AI experiment I was doing for ESKit by giving them a
                     separate tools definitions...
-                    So I started feeling like it was unnecessarily expensive — basically throwing coins at the model every time I executed something.
+                    So I started feeling like it was unnecessarily expensive — basically throwing coins at the model
+                    every time I executed something.
                 </p>
 
                 <p>
@@ -125,16 +128,12 @@
                     Instead, I introduced a separate transformation step:
                 </p>
 
-                <pre><code>CLI definition
-      │
-      ▼
-transformation passes
-      │
-      ▼
-AI-facing CLI definition
-      │
-      ▼
-Claude</code></pre>
+                <div class="mermaid">
+                    flowchart TD
+                    A["CLI definition"] --> B["Transformation passes"]
+                    B --> C["AI-facing CLI definition"]
+                    C --> D["Claude"]
+                </div>
 
                 <p>
                     The original definition remains untouched.
@@ -431,13 +430,14 @@ command C
                 </p>
 
                 <p>
-                    I asked Claude the same questions I asked in 
+                    I asked Claude the same questions I asked in
                     <a href="/blog/eskit-ai-cli-helper.html">
                         Part 1
                     </a>.
                     And the results are very much similar and satisfying.
                     <br>
-                    <a href="https://github.com/damixen/eskit/tree/eskit-ai/ai-model-tests/2026-08-29_203141" target="_blank">
+                    <a href="https://github.com/damixen/eskit/tree/eskit-ai/ai-model-tests/2026-08-29_203141"
+                        target="_blank">
                         Test Result with optimized command definitions.
                     </a>.
                 </p>
@@ -452,25 +452,22 @@ command C
                     This ended up being the part of the design I liked the most.
                     I didn't want ESKit to become:
                 </p>
-
-                <pre><code>CLI definition
-AI definition
-     ↑
-"Please keep these synchronized"</code></pre>
+                <div class="mermaid">
+                    flowchart TD
+                    A["argparse definitions"] --> B["CLI use"]
+                    C["AI definitions"] -->D["AI-facing view"]
+                </div>
 
                 <p>
                     Instead, it became:
                 </p>
 
-                <pre><code>        argparse definitions
-                  │
-          ┌───────┴───────┐
-          │               │
-          ▼               ▼
-       CLI use      AI transformation
-                          │
-                          ▼
-                    AI-facing view</code></pre>
+                <div class="mermaid">
+                    flowchart TD
+                    A["argparse definitions"] --> B["CLI use"]
+                    A --> C["AI transformation"]
+                    C --> D["AI-facing view"]
+                </div>
 
                 <p>
                     The AI interface is generated from the same definitions that
@@ -548,17 +545,14 @@ AI definition
                     The interaction was essentially:
                 </p>
 
-                <pre><code>User
-  ↓
-Claude
-  ↓
-Tool call
-  ↓
-ESKit command
-  ↓
-Result
-  ↓
-Claude</code></pre>
+                <div class="mermaid">
+                    flowchart LR
+                    A["User"] --> B["Claude"]
+                    B --> C["Tool call"]
+                    C --> D["ESKit command"]
+                    D --> E["Result"]
+                    E --> A
+                </div>
 
                 <p>
                     For simple requests, that was enough.

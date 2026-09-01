@@ -29,6 +29,8 @@
     <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
 
     <link rel="stylesheet" href="../css/style.css" />
+    <script type="module" src="/js/mermaid.js"></script>
+
 </head>
 
 <body>
@@ -49,7 +51,7 @@
             <strong>
                 Previous:
                 <a href="/blog/eskit-ai-cli-helper-2.html">
-                    Turning Tool Calls Back into Commands →
+                    ← Turning Tool Calls Back into Commands
                 </a>
             </strong>
         </p>
@@ -99,19 +101,13 @@
                     The general flow looked roughly like this:
                 </p>
 
-                <pre><code>argparse
-    │
-    ▼
-cmd_<command>()
-    │
-    ▼
-ESKit core
-    │
-    ▼
-render()
-    │
-    ▼
-terminal</code></pre>
+                <div class="mermaid">
+                    flowchart LR
+                    A["Argparse"] --> B["cmd_()"]
+                    B --> C["ESKit core"]
+                    C --> D["render()"]
+                    D --> E["terminal"]
+                </div>
                 <p>
                     That works well for a traditional CLI.
                     For example, a command such as <code>show host</code> could
@@ -163,35 +159,29 @@ terminal</code></pre>
                 <p>
                     the command becomes much simpler:
                 </p>
-
-                <pre><code>cmd_&lt;command&gt;
-    │
-    ▼
-ESKit core
-    │
-    ▼
-Result</code></pre>
+                 <div class="mermaid">
+                    flowchart LR
+                    A["cmd_()"] --> B["ESKit core"]
+                    B --> C["Result"]
+                </div>
 
                 <p>
                     The <code>Result</code> object can then move upward to the
                     main application layer.
                 </p>
 
-                <pre><code>argparse
-    │
-    ▼
-cmd_<command>
-    │
-    ▼
-ESKit core
-    │
-    ▼
-Result
-    │
-    ▼
-main()
-    ├── CLI → renderer
-    └── AI  → agent loop</code></pre>
+                <div class="mermaid">
+                    flowchart LR
+                    A["Argparse"] --> B["cmd_()"]
+                    B --> C["ESKit core"]
+                    C --> D["Result"]
+                    D --> E["main()"]
+                    E --> F["CLI"]
+                    E --> G["AI"]
+
+                    F --> H["Renderer"]
+                    G --> J["Agent Loop"]
+                </div>
 
                 <p>
                     This means the command is primarily responsible for executing
@@ -325,33 +315,19 @@ Web UI</code></pre>
                     Now it can be much more straightforward:
                 </p>
 
-                <pre><code>User
-    │
-    ▼
-    AI
-    │
-    ▼
-Tool call
-    │
-    ▼
-ESKit command
-    │
-    ▼
-ESKit core
-    │
-    ▼
-Result
-    │
-    ▼
-    AI
-    │
-    ├── another tool call
-    │
-    ├── ask user
-    │
-    └── final response</code></pre>
-
-
+                <div class="mermaid">
+                    flowchart LR
+                    A["User"] --> B["AI"]
+                    B --> C["ToolCall"]
+                    C --> D["Result"]
+                    D --> E["ESKit command"]
+                    E --> F["ESKit core"]
+                    F --> G["Result"]
+                    G --> H["AI path"]
+                    H --> I["Another ToolCall"]
+                    H --> J["Ask User"]
+                    H --> K["Final Response"]
+                </div>
                 <p>
                     The AI layer doesn't need to understand how ESKit renders a
                     table.
