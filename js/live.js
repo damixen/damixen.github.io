@@ -213,6 +213,7 @@ function updateHoneypots(honeypots) {
   });
 }
 
+
 function updateAS(asList) {
   const table = document.getElementById("as-table");
   table.innerHTML = "";
@@ -224,42 +225,37 @@ function updateAS(asList) {
     organization.textContent = item.as_org || "Unknown";
 
     const asn = document.createElement("td");
-    asn.textContent = `AS${item.asn}`;
+    asn.textContent = item.asn ? `AS${item.asn}` : "Unknown";
 
     const events = document.createElement("td");
     events.textContent = item.events.toLocaleString();
 
     const countries = document.createElement("td");
-    countries.textContent = item.countries?.length ?? 0;
-
-    const toggleCell = document.createElement("td");
-    const toggle = document.createElement("button");
-
-    toggle.className = "as-toggle";
-    toggle.textContent = "▸";
-    toggle.setAttribute("aria-expanded", "false");
-    toggle.setAttribute(
-      "aria-label",
-      `Show countries for ${item.as_org || "AS"}`,
-    );
-
-    toggleCell.appendChild(toggle);
 
     row.appendChild(organization);
     row.appendChild(asn);
     row.appendChild(events);
     row.appendChild(countries);
-    row.appendChild(toggleCell);
-
-    table.appendChild(row);
 
     if (item.countries && item.countries.length > 0) {
+      const viewButton = document.createElement("button");
+
+      viewButton.className = "as-view-button";
+      viewButton.type = "button";
+      viewButton.textContent = `View (${item.countries.length})`;
+      viewButton.setAttribute(
+        "aria-label",
+        `View ${item.countries.length} countries for ${item.as_org || "AS"}`,
+      );
+
+      countries.appendChild(viewButton);
+
       const detailRow = document.createElement("tr");
       detailRow.className = "as-detail-row";
       detailRow.hidden = true;
 
       const detailCell = document.createElement("td");
-      detailCell.colSpan = 5;
+      detailCell.colSpan = 4;
 
       const countryTable = document.createElement("table");
       countryTable.className = "dashboard-table as-country-table";
@@ -275,32 +271,60 @@ function updateAS(asList) {
 
         countryRow.appendChild(countryName);
         countryRow.appendChild(countryEvents);
-
         countryTable.appendChild(countryRow);
       });
 
       detailCell.appendChild(countryTable);
       detailRow.appendChild(detailCell);
-      table.appendChild(detailRow);
 
-      toggle.addEventListener("click", () => {
+      row.classList.add("as-expandable");
+      row.setAttribute("tabindex", "0");
+      row.setAttribute("role", "button");
+      row.setAttribute("aria-expanded", "false");
+
+      const toggleRow = () => {
         const expanded =
-          toggle.getAttribute("aria-expanded") === "true";
+          row.getAttribute("aria-expanded") === "true";
 
-        toggle.setAttribute("aria-expanded", String(!expanded));
-        toggle.textContent = expanded ? "▸" : "▾";
-        toggle.setAttribute(
+        row.setAttribute("aria-expanded", String(!expanded));
+        detailRow.hidden = expanded;
+
+        viewButton.textContent = expanded
+          ? `View (${item.countries.length})`
+          : `Hide (${item.countries.length})`;
+
+        viewButton.setAttribute(
           "aria-label",
           expanded
-            ? `Show countries for ${item.as_org || "AS"}`
-            : `Hide countries for ${item.as_org || "AS"}`,
+            ? `View ${item.countries.length} countries for ${item.as_org || "AS"}`
+            : `Hide ${item.countries.length} countries for ${item.as_org || "AS"}`,
         );
+      };
 
-        detailRow.hidden = expanded;
+      viewButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleRow();
       });
+
+      row.addEventListener("click", toggleRow);
+
+      row.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          toggleRow();
+        }
+      });
+
+      table.appendChild(row);
+      table.appendChild(detailRow);
+    } else {
+      countries.textContent = "—";
+      table.appendChild(row);
     }
   });
 }
+
+
 
 function updateDateState() {
   const mode = document.querySelector('input[name="mode"]:checked').value;
