@@ -1061,20 +1061,11 @@ button:disabled {
    AS Organization Table
    ========================================== */
 
-.as-expandable {
-  cursor: pointer;
-}
-
-.as-expandable:hover {
-  background: var(--control-card);
-}
-
-.as-expandable:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
 .as-view-button {
+  display: inline-block;
+  max-width: 100%;
+  box-sizing: border-box;
+
   border: 1px solid var(--border);
   border-radius: 4px;
   background: var(--control-card);
@@ -1083,7 +1074,6 @@ button:disabled {
   font: inherit;
   font-size: 0.85rem;
   cursor: pointer;
-  white-space: nowrap;
 }
 
 .as-view-button:hover {
@@ -1125,4 +1115,44 @@ button:disabled {
 
 .as-country-table tr:last-child td {
   border-bottom: none;
+}
+
+.as-table-container .dashboard-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.as-table-container .dashboard-table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: auto;
+}
+
+.as-table-container .dashboard-table th,
+.as-table-container .dashboard-table td {
+  overflow-wrap: normal;
+}
+
+.as-table-container .dashboard-table th:nth-child(2),
+.as-table-container .dashboard-table td:nth-child(2) {
+  min-width: 70px;
+  white-space: nowrap;
+}
+
+.as-table-container .dashboard-table th:nth-child(3),
+.as-table-container .dashboard-table td:nth-child(3) {
+  min-width: 75px;
+  white-space: nowrap;
+}
+
+.as-table-container .dashboard-table th:nth-child(4),
+.as-table-container .dashboard-table td:nth-child(4) {
+  min-width: 95px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.as-table-container .dashboard-table th:nth-child(1),
+.as-table-container .dashboard-table td:nth-child(1) {
+  overflow-wrap: anywhere;
 }

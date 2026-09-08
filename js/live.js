@@ -277,11 +277,6 @@ function updateAS(asList) {
       detailCell.appendChild(countryTable);
       detailRow.appendChild(detailCell);
 
-      row.classList.add("as-expandable");
-      row.setAttribute("tabindex", "0");
-      row.setAttribute("role", "button");
-      row.setAttribute("aria-expanded", "false");
-
       const toggleRow = () => {
         const expanded =
           row.getAttribute("aria-expanded") === "true";
@@ -304,15 +299,6 @@ function updateAS(asList) {
       viewButton.addEventListener("click", (event) => {
         event.stopPropagation();
         toggleRow();
-      });
-
-      row.addEventListener("click", toggleRow);
-
-      row.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          toggleRow();
-        }
       });
 
       table.appendChild(row);
