@@ -49,20 +49,41 @@ async function loadFeed() {
 
   const host = document.getElementById("host").value;
 
-  const mode = document.querySelector('input[name="mode"]:checked').value;
+  const mode = document.querySelector(
+    'input[name="mode"]:checked',
+  ).value;
 
   const date = document.getElementById("date").value;
-
   let url = `${API_BASE}?host_id=${host}&mode=${mode}`;
 
   if (mode === "daily") {
     if (!date) {
-      setFeedStatus("Please select a date for daily reports.", true);
+      setFeedStatus(
+        "Please select a date for daily reports.",
+        true,
+      );
 
       return;
     }
 
     url += `&date=${date}`;
+  }
+
+  if (mode === "weekly") {
+    if (!date) {
+      setFeedStatus(
+        "Please select a date for weekly reports.",
+        true,
+      );
+
+      return;
+    }
+
+    const selectedDate = new Date(`${date}T00:00:00`);
+
+    const week = getISOWeekId(selectedDate);
+
+    url += `&week=${week}`;
   }
 
   try {
@@ -82,7 +103,9 @@ async function loadFeed() {
       !Array.isArray(telemetry.protocols) ||
       !Array.isArray(telemetry.honeypot_types) ||
       !Array.isArray(telemetry.sparkline) ||
-      !telemetry.sparkline.every((value) => typeof value === "number")
+      !telemetry.sparkline.every(
+        (value) => typeof value === "number",
+      )
     ) {
       throw new Error("Invalid telemetry response");
     }
@@ -105,27 +128,34 @@ async function loadFeed() {
 
     updateHoneypots(telemetry.honeypot_types);
 
-    const asList = Array.isArray(telemetry.as) ? telemetry.as : [];
+    const asList = Array.isArray(telemetry.as)
+      ? telemetry.as
+      : [];
 
     updateAS(asList);
 
     updateSparkline(telemetry.sparkline);
+
+    updateModeLabels(mode, date);
+
 
     setFeedStatus("Telemetry loaded successfully.");
   } catch (error) {
     console.error(error);
 
     setFeedStatus(
-      `Unable to load telemetry data. Please try again later.`,
+      "Unable to load telemetry data. Please try again later.",
       true,
     );
   }
 }
 
-document.getElementById("load-feed").addEventListener("click", loadFeed);
+document
+  .getElementById("load-feed")
+  .addEventListener("click", loadFeed);
 
 setDefaultDate();
-
+updateDateState();
 loadFeed();
 
 function updateProtocols(protocols) {
@@ -150,7 +180,9 @@ function updateProtocols(protocols) {
 }
 
 function formatPort(port) {
-  return portServices[port] ? `${port} ${portServices[port]}` : `${port}`;
+  return portServices[port]
+    ? `${port} ${portServices[port]}`
+    : `${port}`;
 }
 
 function updatePorts(ports) {
@@ -164,6 +196,7 @@ function updatePorts(ports) {
 
   ports.forEach((port) => {
     const tag = document.createElement("span");
+
     tag.className = "tag";
     tag.textContent = formatPort(port);
 
@@ -213,9 +246,9 @@ function updateHoneypots(honeypots) {
   });
 }
 
-
 function updateAS(asList) {
   const table = document.getElementById("as-table");
+
   table.innerHTML = "";
 
   asList.forEach((item) => {
@@ -225,7 +258,9 @@ function updateAS(asList) {
     organization.textContent = item.as_org || "Unknown";
 
     const asn = document.createElement("td");
-    asn.textContent = item.asn ? `AS${item.asn}` : "Unknown";
+    asn.textContent = item.asn
+      ? `AS${item.asn}`
+      : "Unknown";
 
     const events = document.createElement("td");
     events.textContent = item.events.toLocaleString();
@@ -242,35 +277,49 @@ function updateAS(asList) {
 
       viewButton.className = "as-view-button";
       viewButton.type = "button";
-      viewButton.textContent = `View (${item.countries.length})`;
+      viewButton.textContent =
+        `View (${item.countries.length})`;
+
       viewButton.setAttribute(
         "aria-label",
-        `View ${item.countries.length} countries for ${item.as_org || "AS"}`,
+        `View ${item.countries.length} countries for ${item.as_org || "AS"
+        }`,
       );
 
       countries.appendChild(viewButton);
 
       const detailRow = document.createElement("tr");
+
       detailRow.className = "as-detail-row";
       detailRow.hidden = true;
 
       const detailCell = document.createElement("td");
+
       detailCell.colSpan = 4;
 
-      const countryTable = document.createElement("table");
-      countryTable.className = "dashboard-table as-country-table";
+      const countryTable =
+        document.createElement("table");
+
+      countryTable.className =
+        "dashboard-table as-country-table";
 
       item.countries.forEach((country) => {
         const countryRow = document.createElement("tr");
 
-        const countryName = document.createElement("td");
+        const countryName =
+          document.createElement("td");
+
         countryName.textContent = country.country;
 
-        const countryEvents = document.createElement("td");
-        countryEvents.textContent = country.events.toLocaleString();
+        const countryEvents =
+          document.createElement("td");
+
+        countryEvents.textContent =
+          country.events.toLocaleString();
 
         countryRow.appendChild(countryName);
         countryRow.appendChild(countryEvents);
+
         countryTable.appendChild(countryRow);
       });
 
@@ -281,7 +330,11 @@ function updateAS(asList) {
         const expanded =
           row.getAttribute("aria-expanded") === "true";
 
-        row.setAttribute("aria-expanded", String(!expanded));
+        row.setAttribute(
+          "aria-expanded",
+          String(!expanded),
+        );
+
         detailRow.hidden = expanded;
 
         viewButton.textContent = expanded
@@ -291,47 +344,74 @@ function updateAS(asList) {
         viewButton.setAttribute(
           "aria-label",
           expanded
-            ? `View ${item.countries.length} countries for ${item.as_org || "AS"}`
-            : `Hide ${item.countries.length} countries for ${item.as_org || "AS"}`,
+            ? `View ${item.countries.length} countries for ${item.as_org || "AS"
+            }`
+            : `Hide ${item.countries.length} countries for ${item.as_org || "AS"
+            }`,
         );
       };
 
-      viewButton.addEventListener("click", (event) => {
-        event.stopPropagation();
-        toggleRow();
-      });
+      viewButton.addEventListener(
+        "click",
+        (event) => {
+          event.stopPropagation();
+
+          toggleRow();
+        },
+      );
 
       table.appendChild(row);
       table.appendChild(detailRow);
     } else {
       countries.textContent = "—";
+
       table.appendChild(row);
     }
   });
 }
 
-
-
 function updateDateState() {
-  const mode = document.querySelector('input[name="mode"]:checked').value;
+  const mode = document.querySelector(
+    'input[name="mode"]:checked',
+  ).value;
 
   const date = document.getElementById("date");
+  const weekRange = document.getElementById("week-range");
 
-  date.disabled = mode !== "daily";
+  date.disabled =
+    mode !== "daily" && mode !== "weekly";
+
+  if (mode === "weekly") {
+    date.max = formatDateInputValue(
+      getLastCompletedWeekEnd(),
+    );
+
+    if (date.value) {
+      const selectedDate = new Date(
+        `${date.value}T00:00:00`,
+      );
+
+      weekRange.textContent =
+        formatWeekRange(selectedDate);
+    }
+  } else {
+    date.removeAttribute("max");
+    weekRange.textContent = "";
+  }
 }
 
-document.querySelectorAll('input[name="mode"]').forEach((input) => {
-  input.addEventListener("change", updateDateState);
-});
-
-updateDateState();
+document
+  .getElementById("date")
+  .addEventListener("change", updateDateState);
 
 function setFeedStatus(message, error = false) {
   const status = document.getElementById("feed-status");
 
   status.textContent = message;
 
-  status.className = error ? "status-note error" : "status-note";
+  status.className = error
+    ? "status-note error"
+    : "status-note";
 
   if (!error) {
     setTimeout(() => {
@@ -341,31 +421,138 @@ function setFeedStatus(message, error = false) {
 }
 
 function setDefaultDate() {
-  const dateInput = document.getElementById("date");
+  const dateInput =
+    document.getElementById("date");
 
-  const yesterday = new Date();
+  const mode = document.querySelector(
+    'input[name="mode"]:checked',
+  ).value;
 
-  yesterday.setDate(yesterday.getDate() - 1);
+  const date = new Date();
 
-  const yyyy = yesterday.getFullYear();
+  if (mode === "weekly") {
+    const day = date.getDay() || 7;
 
-  const mm = String(yesterday.getMonth() + 1).padStart(2, "0");
+    // Most recent completed Sunday.
+    date.setDate(
+      date.getDate() - day,
+    );
+  } else {
+    // Daily: yesterday.
+    date.setDate(
+      date.getDate() - 1,
+    );
+  }
 
-  const dd = String(yesterday.getDate()).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  const mm = String(
+    date.getMonth() + 1,
+  ).padStart(2, "0");
+  const dd = String(
+    date.getDate(),
+  ).padStart(2, "0");
 
   dateInput.value = `${yyyy}-${mm}-${dd}`;
 }
 
+function getISOWeekId(date) {
+  const utcDate = new Date(
+    Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+    ),
+  );
+
+  const day = utcDate.getUTCDay() || 7;
+
+  // Move to Thursday of the current ISO week.
+  utcDate.setUTCDate(
+    utcDate.getUTCDate() + 4 - day,
+  );
+
+  const year = utcDate.getUTCFullYear();
+
+  const yearStart = new Date(
+    Date.UTC(year, 0, 1),
+  );
+
+  const weekNumber = Math.ceil(
+    (
+      ((utcDate - yearStart) / 86400000) +
+      1
+    ) / 7,
+  );
+
+  return `${year}-W${String(
+    weekNumber,
+  ).padStart(2, "0")}`;
+}
+
+function getWeekRange(date) {
+  const selected = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
+
+  const day = selected.getDay() || 7;
+
+  const monday = new Date(selected);
+
+  monday.setDate(
+    selected.getDate() - day + 1,
+  );
+
+  const sunday = new Date(monday);
+
+  sunday.setDate(
+    monday.getDate() + 6,
+  );
+
+  return {
+    monday,
+    sunday,
+  };
+}
+
+function formatWeekRange(date) {
+  const { monday, sunday } =
+    getWeekRange(date);
+
+  const options = {
+    month: "short",
+    day: "numeric",
+  };
+
+  const mondayText =
+    monday.toLocaleDateString(
+      undefined,
+      options,
+    );
+
+  const sundayText =
+    sunday.toLocaleDateString(
+      undefined,
+      options,
+    );
+
+  return `Week of ${mondayText} – ${sundayText}`;
+}
+
 function formatNumber(value) {
   if (value >= 1000) {
-    return Math.round(value / 1000) + "k";
+    return (
+      Math.round(value / 1000) + "k"
+    );
   }
 
   return value;
 }
 
 function updateSparkline(values) {
-  const svg = document.getElementById("sparkline");
+  const svg =
+    document.getElementById("sparkline");
 
   if (!values || values.length === 0) {
     svg.innerHTML = "";
@@ -381,13 +568,18 @@ function updateSparkline(values) {
   const paddingTop = 10;
   const paddingBottom = 12;
 
-  const chartWidth = width - paddingLeft - paddingRight;
+  const chartWidth =
+    width -
+    paddingLeft -
+    paddingRight;
 
-  const chartHeight = height - paddingTop - paddingBottom;
+  const chartHeight =
+    height -
+    paddingTop -
+    paddingBottom;
 
-  // ---------- Y scale ----------
-
-  const maxValue = Math.max(...values);
+  const maxValue =
+    Math.max(...values);
 
   const max =
     maxValue <= 5000
@@ -396,22 +588,35 @@ function updateSparkline(values) {
         ? Math.ceil(maxValue / 5000) * 5000
         : Math.ceil(maxValue / 10000) * 10000;
 
-  const step = max <= 5000 ? 1000 : max <= 20000 ? 5000 : 10000;
+  const step =
+    max <= 5000
+      ? 1000
+      : max <= 20000
+        ? 5000
+        : 10000;
 
   function formatYAxis(value) {
     if (value >= 1000) {
-      return Math.round(value / 1000) + "k";
+      return (
+        Math.round(value / 1000) +
+        "k"
+      );
     }
 
     return Math.round(value).toString();
   }
 
-  // ---------- Generate Y labels ----------
-
   const yLabels = [];
 
-  for (let value = max; value >= 0; value -= step) {
-    const y = paddingTop + chartHeight - (value / max) * chartHeight;
+  for (
+    let value = max;
+    value >= 0;
+    value -= step
+  ) {
+    const y =
+      paddingTop +
+      chartHeight -
+      (value / max) * chartHeight;
 
     yLabels.push({
       value,
@@ -434,11 +639,12 @@ function updateSparkline(values) {
     )
     .join("");
 
-  // ---------- Generate grid ----------
-
   const gridLines = yLabels
     .map((label) => {
-      if (label.value === max || label.value === 0) {
+      if (
+        label.value === max ||
+        label.value === 0
+      ) {
         return "";
       }
 
@@ -454,28 +660,40 @@ function updateSparkline(values) {
     })
     .join("");
 
-  // ---------- Data points ----------
-
   const points = values
     .map((value, index) => {
-      const x = paddingLeft + (index / (values.length - 1)) * chartWidth;
+      const x =
+        paddingLeft +
+        (index / (values.length - 1)) *
+        chartWidth;
 
-      const y = paddingTop + chartHeight - (value / max) * chartHeight;
+      const y =
+        paddingTop +
+        chartHeight -
+        (value / max) * chartHeight;
 
       return `${x},${y}`;
     })
     .join(" ");
 
   const areaPoints =
-    `${paddingLeft},${height - paddingBottom} ` +
+    `${paddingLeft},${height - paddingBottom
+    } ` +
     points +
-    ` ${width - paddingRight},${height - paddingBottom}`;
+    ` ${width - paddingRight
+    },${height - paddingBottom}`;
 
   const circles = values
     .map((value, index) => {
-      const x = paddingLeft + (index / (values.length - 1)) * chartWidth;
+      const x =
+        paddingLeft +
+        (index / (values.length - 1)) *
+        chartWidth;
 
-      const y = paddingTop + chartHeight - (value / max) * chartHeight;
+      const y =
+        paddingTop +
+        chartHeight -
+        (value / max) * chartHeight;
 
       return `
         <circle
@@ -488,16 +706,8 @@ function updateSparkline(values) {
     })
     .join("");
 
-  // ---------- Render ----------
-
   svg.innerHTML = `
-
-        <!-- Grid -->
-
         ${gridLines}
-
-
-        <!-- Y axis -->
 
         <line
             class="axis"
@@ -507,9 +717,6 @@ function updateSparkline(values) {
             y2="${height - paddingBottom}">
         </line>
 
-
-        <!-- X axis -->
-
         <line
             class="axis"
             x1="${paddingLeft}"
@@ -518,136 +725,189 @@ function updateSparkline(values) {
             y2="${height - paddingBottom}">
         </line>
 
-
-        <!-- Y labels -->
-
         ${yAxis}
-
-
-        <!-- Area -->
 
         <polygon
             class="sparkline-fill"
             points="${areaPoints}">
         </polygon>
 
-
-        <!-- Data line -->
-
         <polyline
             class="sparkline-line"
             points="${points}">
         </polyline>
 
-
-        <!-- Data points -->
-
         ${circles}
-
   `;
 }
 
 function updateModeState() {
-  const mode = document.querySelector('input[name="mode"]:checked').value;
+  const mode = document.querySelector(
+    'input[name="mode"]:checked',
+  ).value;
 
-  const date = document.getElementById("date");
+  const date =
+    document.getElementById("date");
 
-  const load = document.getElementById("load-feed");
+  const load =
+    document.getElementById("load-feed");
 
-  if (mode === "daily") {
-    date.disabled = false;
+  const selectableMode =
+    mode === "daily" ||
+    mode === "weekly";
 
-    load.disabled = false;
-  } else {
-    date.disabled = true;
+  date.disabled = !selectableMode;
+  load.disabled = !selectableMode;
 
-    load.disabled = true;
-  }
+  updateDateState();
 }
 
-document.querySelectorAll('input[name="mode"]').forEach((input) => {
-  input.addEventListener("change", () => {
-    updateModeState();
+document
+  .querySelectorAll('input[name="mode"]')
+  .forEach((input) => {
+    input.addEventListener(
+      "change",
+      () => {
+        updateModeState();
 
-    const mode = document.querySelector('input[name="mode"]:checked').value;
+        const mode =
+          document.querySelector(
+            'input[name="mode"]:checked',
+          ).value;
 
-    if (mode === "latest") {
-      loadFeed();
-    }
+        if (mode === "weekly") {
+          setDefaultDate();
+          updateDateState();
+        }
+
+        if (mode === "latest") {
+          loadFeed();
+        }
+      },
+    );
   });
-});
 
 updateModeState();
 
 function timeAgo(timestamp) {
   const now = new Date();
 
-  const updated = new Date(timestamp);
+  const updated =
+    new Date(timestamp);
 
-  const seconds = Math.floor((now - updated) / 1000);
+  const seconds = Math.floor(
+    (now - updated) / 1000,
+  );
 
   if (seconds < 60) {
     return "just now";
   }
 
-  const minutes = Math.floor(seconds / 60);
+  const minutes =
+    Math.floor(seconds / 60);
 
   if (minutes < 60) {
-    return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+    return `${minutes} minute${minutes === 1 ? "" : "s"
+      } ago`;
   }
 
-  const hours = Math.floor(minutes / 60);
+  const hours =
+    Math.floor(minutes / 60);
 
   if (hours < 24) {
-    return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+    return `${hours} hour${hours === 1 ? "" : "s"
+      } ago`;
   }
 
-  const days = Math.floor(hours / 24);
+  const days =
+    Math.floor(hours / 24);
 
-  return `${days} day${days === 1 ? "" : "s"} ago`;
+  return `${days} day${days === 1 ? "" : "s"
+    } ago`;
 }
 
-const toolbar = document.querySelector(".live-toolbar");
+const toolbar =
+  document.querySelector(".live-toolbar");
 
-const hideButton = document.getElementById("toggle-controls");
-const showButton = document.getElementById("show-controls");
+const hideButton =
+  document.getElementById(
+    "toggle-controls",
+  );
 
-hideButton.addEventListener("click", () => {
-  toolbar.classList.add("collapsed");
-});
+const showButton =
+  document.getElementById(
+    "show-controls",
+  );
 
-showButton.addEventListener("click", () => {
-  toolbar.classList.remove("collapsed");
-});
+hideButton.addEventListener(
+  "click",
+  () => {
+    toolbar.classList.add(
+      "collapsed",
+    );
+  },
+);
 
-const hostSelect = document.getElementById("host");
-const modeInputs = document.querySelectorAll('input[name="mode"]');
+showButton.addEventListener(
+  "click",
+  () => {
+    toolbar.classList.remove(
+      "collapsed",
+    );
+  },
+);
 
-const summarySensor = document.getElementById("summary-sensor");
+const hostSelect =
+  document.getElementById("host");
+
+const modeInputs =
+  document.querySelectorAll(
+    'input[name="mode"]',
+  );
+
+const summarySensor =
+  document.getElementById(
+    "summary-sensor",
+  );
 
 function updateSummary() {
-  const hostText = hostSelect.options[hostSelect.selectedIndex].text;
+  const hostText =
+    hostSelect.options[
+      hostSelect.selectedIndex
+    ].text;
 
-  summarySensor.textContent = `Sensor: ${hostText}`;
-
-  const selectedMode = document.querySelector(
-    'input[name="mode"]:checked',
-  ).value;
+  summarySensor.textContent =
+    `Sensor: ${hostText}`;
 }
 
-hostSelect.addEventListener("change", updateSummary);
+hostSelect.addEventListener(
+  "change",
+  updateSummary,
+);
 
 modeInputs.forEach((input) => {
-  input.addEventListener("change", updateSummary);
+  input.addEventListener(
+    "change",
+    updateSummary,
+  );
 });
 
 updateSummary();
 
-const checkbox = document.getElementById("pin-controls");
-const controls = document.querySelector(".live-toolbar");
+const checkbox =
+  document.getElementById(
+    "pin-controls",
+  );
 
-// Restore preference
-const pinned = localStorage.getItem("pinControls") === "true";
+const controls =
+  document.querySelector(
+    ".live-toolbar",
+  );
+
+const pinned =
+  localStorage.getItem(
+    "pinControls",
+  ) === "true";
 
 checkbox.checked = pinned;
 
@@ -655,8 +915,86 @@ if (pinned) {
   controls.classList.add("sticky");
 }
 
-checkbox.addEventListener("change", () => {
-  controls.classList.toggle("sticky", checkbox.checked);
+checkbox.addEventListener(
+  "change",
+  () => {
+    controls.classList.toggle(
+      "sticky",
+      checkbox.checked,
+    );
 
-  localStorage.setItem("pinControls", checkbox.checked);
-});
+    localStorage.setItem(
+      "pinControls",
+      checkbox.checked,
+    );
+  },
+);
+
+
+function getLastCompletedWeekEnd() {
+  const today = new Date();
+  const day = today.getDay() || 7; // Sunday = 7
+
+  const lastSunday = new Date(today);
+  lastSunday.setDate(
+    today.getDate() - day,
+  );
+
+  return lastSunday;
+}
+
+function formatDateInputValue(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(
+    date.getMonth() + 1,
+  ).padStart(2, "0");
+  const dd = String(
+    date.getDate(),
+  ).padStart(2, "0");
+
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function updateModeLabels(mode, date) {
+  const eventsLabel =
+    document.getElementById("events-label");
+
+  const trendLabel =
+    document.getElementById("trend-label");
+
+  if (mode === "latest") {
+    eventsLabel.textContent = "Events (24h)";
+    trendLabel.textContent =
+      "Time (UTC) — Last 24 Hours";
+    return;
+  }
+
+  if (mode === "daily") {
+    eventsLabel.textContent = "Events (Daily)";
+
+    const selectedDate =
+      new Date(`${date}T00:00:00`);
+
+    trendLabel.textContent =
+      `Time (UTC) — ${selectedDate.toLocaleDateString(
+        undefined,
+        {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        },
+      )}`;
+
+    return;
+  }
+
+  if (mode === "weekly") {
+    eventsLabel.textContent = "Events (Weekly)";
+
+    const selectedDate =
+      new Date(`${date}T00:00:00`);
+
+    trendLabel.textContent =
+      `Time (UTC) — ${formatWeekRange(selectedDate)}`;
+  }
+}

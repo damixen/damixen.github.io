@@ -1156,3 +1156,10 @@ button:disabled {
 .as-table-container .dashboard-table td:nth-child(1) {
   overflow-wrap: anywhere;
 }
+
+.week-range {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}

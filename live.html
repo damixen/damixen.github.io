@@ -40,6 +40,7 @@
       <div class="section-header">
         <span class="status-dot"></span>
         <h2>Live Feed</h2>
+
         <label class="pin-option">
           <input type="checkbox" id="pin-controls" />
           Pin controls
@@ -55,7 +56,9 @@
           <label for="host">Sensor</label>
 
           <select id="host">
-            <option value="hp-do-sfo3">US West Coast (hp-do-sfo3)</option>
+            <option value="hp-do-sfo3">
+              US West Coast (hp-do-sfo3)
+            </option>
           </select>
         </div>
 
@@ -72,12 +75,20 @@
               <input type="radio" name="mode" value="daily" />
               Daily
             </label>
+
+            <label>
+              <input type="radio" name="mode" value="weekly" />
+              Weekly
+            </label>
           </div>
         </div>
 
         <div class="control-group">
           <label for="date">Date</label>
+
           <input id="date" type="date" />
+
+          <span id="week-range" class="week-range"></span>
         </div>
 
         <div class="control-group">
@@ -86,7 +97,9 @@
       </div>
 
       <div class="feed-meta">
-        <span id="feed-status" aria-live="polite"> Last update: -- </span>
+        <span id="feed-status" aria-live="polite">
+          Last update: --
+        </span>
 
         <span> • Data updated hourly </span>
 
@@ -115,7 +128,9 @@
         <div class="stat">
           <div id="events" class="number">-</div>
 
-          <div class="label">Events (24h)</div>
+          <div id="events-label" class="label">
+            Events (24h)
+          </div>
         </div>
 
         <div class="stat">
@@ -130,6 +145,7 @@
           <div class="label">Countries</div>
         </div>
       </div>
+
       <p id="updated" class="status-note"></p>
     </section>
 
@@ -142,10 +158,13 @@
 
       <div id="sparkline-container">
         <div class="chart-wrapper">
-          <svg id="sparkline" viewBox="0 0 400 180" preserveAspectRatio="none"></svg>
+          <svg id="sparkline" viewBox="0 0 400 180" preserveAspectRatio="none">
+          </svg>
         </div>
 
-        <div class="x-label">Time (UTC) — Last 24 Hours</div>
+        <div id="trend-label" class="x-label">
+          Time (UTC) — Last 24 Hours
+        </div>
       </div>
     </section>
 
@@ -169,16 +188,17 @@
       <table class="dashboard-table">
         <tr>
           <th>Country</th>
-
           <th>Events</th>
         </tr>
 
         <tbody id="countries-table"></tbody>
       </table>
     </section>
+
     <section class="card">
       <div class="section-header">
         <span class="status-dot"></span>
+
         <h2>Top AS Organizations</h2>
       </div>
 
@@ -195,6 +215,7 @@
         </table>
       </div>
     </section>
+
     <section class="card">
       <div class="section-header">
         <span class="status-dot"></span>
@@ -205,7 +226,6 @@
       <table class="dashboard-table">
         <tr>
           <th>Honeypot</th>
-
           <th>Events</th>
         </tr>
 
@@ -224,6 +244,7 @@
         GitHub
       </a>
     </div>
+
     <p class="footer-version">GingerPot 2026.08.5</p>
   </footer>
 
