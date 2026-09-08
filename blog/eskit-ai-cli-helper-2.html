@@ -28,6 +28,8 @@
     <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
 
     <link rel="stylesheet" href="../css/style.css" />
+    <script type="module" src="/js/mermaid.js"></script>
+
 
 </head>
 
@@ -49,7 +51,7 @@
             <strong>
                 Previous:
                 <a href="/blog/eskit-ai-cli-helper.html">
-                    Building an AI CLI Helper from the CLI's Own Argument Definitions ←
+                    ← Building an AI CLI Helper from the CLI's Own Argument Definitions
                 </a>
             </strong>
         </p>
@@ -111,17 +113,12 @@
                     The command definitions I already had could be transformed
                     into LLM tool definitions.
                 </p>
-
-                <pre><code>argparse
-    │
-    ▼
-Command JSON
-    │
-    ▼
-LLM Tool Definition
-    │
-    ▼
-Claude</code></pre>
+                <div class="mermaid">
+                    flowchart TD
+                    A["Argparse"] --> B["Command JSON"]
+                    B --> C["LLM Tool Definition"]
+                    C --> D["Claude"]
+                </div>
                 <p>
                     For example, the existing <code>index create</code> command
                     could become a tool with an argument such as
@@ -213,23 +210,14 @@ class ToolCall:
                     Finally, those arguments can be passed to the same
                     <code>argparse</code> parser that a normal user would use.
                 </p>
-
-                <pre><code>Claude
-    │
-    ▼
-ToolCall
-    │
-    ▼
-CLI adapter
-    │
-    ▼
-["cat", "index", "--json"]
-    │
-    ▼
-argparse
-    │
-    ▼
-existing ESKit command</code></pre>
+                <div class="mermaid">
+                    flowchart TD
+                    A["Claude"] --> B["ToolCall"]
+                    B --> C["CLI adapter"]
+                    C --> D["args:[cat, index, --json]"]
+                    D --> E["Argparse"]
+                    E --> F["Existing ESkit command"]
+                </div>
                 <p>
                     This was the part I was particularly interested in.
                     The AI doesn't need a second implementation of the command.
@@ -444,35 +432,6 @@ ToolUseBlock(
                     The model can request a tool, but if the application doesn't
                     execute that tool, return the result to the model, and allow
                     the model to continue, the interaction stops there.
-                </p>
-
-                <pre><code>
-  User
-    │
-    ▼
-Claude
-    │
-    ▼
-ToolCall
-    │
-    ▼
-Execute command
-    │
-    ▼
-Result
-    │
-    ▼
-Claude again
-    │
-    ▼
-Next ToolCall
-    │
-    ▼
-    ...
-    │
-    ▼
-Final response</code></pre>
-                <p>
                     My current implementation only goes through the first part
                     of that loop.
                     In other words, I had built enough infrastructure for an
@@ -491,57 +450,36 @@ Final response</code></pre>
                     A simple helper can do:
                 </p>
 
-                <pre><code>Question
-    │
-    ▼
-Claude
-    │
-    ▼
-Answer</code></pre>
+                <div class="mermaid">
+                    flowchart TD
+                    A["Question"] --> B["Claude"]
+                    B --> C["Answer"]
+                </div>
+
                 <p>
                     Or, with one executable operation:
                 </p>
-
-                <pre><code>Question
-    │
-    ▼
-Claude
-    │
-    ▼
-ToolCall
-    │
-    ▼
-Execute
-    │
-    ▼
-Exit</code></pre>
+                <div class="mermaid">
+                    flowchart TD
+                    A["Question"] --> B["Claude"]
+                    B --> C["ToolCall"]
+                    C --> D["Execute"]
+                    D --> E["Exit"]
+                </div>
                 <p>
                     An agent needs the loop:
                 </p>
 
-                <pre><code>Question
-    │
-    ▼
-Claude
-    │
-    ▼
-ToolCall
-    │
-    ▼
-Execute
-    │
-    ▼
-Tool result
-    │
-    ▼
-Claude
-    │
-    ├── another ToolCall ──► Execute ──► result ──┐
-    │                                             │
-    └─────────────────────────────────────────────┘
-    │
-    ▼
-Final answer</code></pre>
+                <div class="mermaid">
+                    flowchart LR
+                    A["Question"] --> B["Claude"]
+                    B --> C["Tool call"]
+                    C --> D["Execute"]
+                    D --> E["Tool result"]
+                    E --> F{"More Tool Calls?"}
+                    F -->|yes| B
+                    F -->|no| G["Final Answer"]
+                </div>
                 <p>
                     That sounds obvious when written down, but seeing the
                     behavior in a real CLI made the distinction much more
@@ -723,32 +661,32 @@ Final answer</code></pre>
                     intermediate representation.
                 </p>
 
-                <pre><code>argparse
-    │
-    ▼
-Normalized command representation
-    │
-    ▼
-Optimization / projection
-    │
-    ▼
-Context-specific representation
-    │
-    ├──────────────► AI Helper
-    │
-    └──────────────► LLM Tool Definitions
-    │
-    ▼
-ToolCall
-    │
-    ▼
-CLI Adapter
-    │
-    ▼
-argparse
-    │
-    ▼
-Existing ESKit</code></pre>
+                <div class="mermaid">
+                    flowchart TD
+                    A["argparse"]
+                    B["Normalized command representation"]
+                    C["Optimization / projection"]
+                    D["Context-specific representation"]
+                    E["AI Helper"]
+                    F["LLM Tool Definitions"]
+                    G["ToolCall"]
+                    H["CLI Adapter"]
+                    I["argparse"]
+                    J["Existing ESKit"]
+
+                    A --> B
+                    B --> C
+                    C --> D
+                    D --> E
+                    D --> F
+                    E --> G
+                    F --> G
+                    G --> H
+                    H --> I
+                    I --> J
+                </div>
+
+
                 <p>
                     There are effectively two compilation directions here.
                 </p>
@@ -877,32 +815,7 @@ eskit ai "Can you create ai index called test-index2?"</code></pre>
                 <h2>What's Next?</h2>
 
                 <p>
-                    The next milestone is to complete the agent loop:
-                </p>
-
-                <pre><code>Claude
-    │
-    ▼
-ToolCall
-    │
-    ▼
-Execute
-    │
-    ▼
-Tool result
-    │
-    ▼
-Claude
-    │
-    ▼
-Next ToolCall
-    │
-    ▼
-   ...
-    │
-    ▼
-Final answer</code></pre>
-                <p>
+                    The next milestone is to complete the agent loop.
                     But before doing that, I want to spend some time reducing
                     the amount of information being sent to the model.
                     The command definition started at roughly 55 KB.
@@ -939,22 +852,6 @@ Final answer</code></pre>
                     existed.
                 </p>
 
-                <pre><code>Existing CLI
-    │
-    ▼
-argparse
-    │
-    ▼
-Normalized representation
-    │
-    ▼
-LLM tools
-    │
-    ▼
-Tool calls
-    │
-    ▼
-Existing CLI again</code></pre>
                 <p>
                     The AI is effectively sitting between two representations
                     of the same interface.

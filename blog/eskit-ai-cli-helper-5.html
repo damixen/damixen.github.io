@@ -1,0 +1,677 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta name="description"
+        content="Completing the ESKit AI agent loop with multi-step tool calls, user interaction, and LLM-driven decision making." />
+
+    <meta property="og:title" content="Completing the Agent Loop: Letting the LLM Decide When to Act, Ask, and Stop" />
+    <meta property="og:description"
+        content="Exploring how an agent loop lets an LLM use multiple ESKit tools, ask the user for input when necessary, and decide when a task is complete." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://gingerpot.damixen.com/blog/eskit-ai-cli-helper-5.html" />
+
+    <title>Agent Loop: Letting the LLM Decide When to Act, Ask, and Stop | GingerPot</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+
+    <link rel="icon" href="../favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="../favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+
+    <link rel="stylesheet" href="../css/style.css" />
+
+    <script type="module" src="/js/mermaid.js"></script>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/live.html">Live</a>
+                <a class="active" href="/blog.html">Blog</a>
+                <a href="/about.html">About</a>
+                <a href="/collaborate.html">Collaborate</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+
+        <p class="blog-next">
+            <strong>
+                Previous:
+                <a href="/blog/eskit-ai-cli-helper-4.html">
+                    ← From 25K to 7K Tokens: Simplifying the CLI Definition Without Losing Context
+                </a>
+            </strong>
+        </p>
+
+
+        <article class="blog-card">
+
+            <header class="blog-header">
+
+                <p class="series">
+                    Transforming a CLI into an AI-Native CLI
+                </p>
+
+                <p class="blog-kicker">AI / CLI / ESKit</p>
+                <p>August 2026 · ESKit experiment</p>
+
+                <h1>
+                    Agent Loop: Letting the LLM Decide When to Act, Ask, and Stop
+                </h1>
+
+                <p class="blog-meta">
+                    Moving from one-shot tool calls to a multi-step agent
+                </p>
+
+            </header>
+
+
+            <section>
+
+                <h2>From One Tool Call to an Agent</h2>
+
+                <p>
+                    In the previous parts of this series, I built the pieces needed to let an
+                    LLM interact with ESKit. The CLI's own <code>argparse</code> definitions
+                    became the source for LLM tool definitions, tool calls could be translated
+                    back into ESKit commands, execution and presentation were separated, and
+                    the CLI definition was simplified from roughly 25K tokens to about 7K tokens.
+                </p>
+
+                <p>
+                    At that point, the LLM could call an ESKit operation. But it wasn't really
+                    an agent yet. The missing piece was the <strong>agent loop</strong>.
+                </p>
+
+            </section>
+
+
+            <section>
+
+                <h2>From One Tool Call to Multiple Steps</h2>
+
+                <p>
+                    The first version of the AI integration was essentially a one-shot
+                    interaction: the user made a request, the LLM selected a tool, ESKit
+                    executed it, and the result was returned to the LLM.
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["User"] --> B["LLM"]
+                    B -->|"Tool Call"| C["ESKit"]
+                    C -->|"Tool Result"| B
+                    B -->|"Final Response"| A
+                </div>
+
+                <p>
+                    That works well when the request maps cleanly to a single operation.
+                    But many useful requests don't. For example, a user might ask:
+                    <em>"Can you get the latest cache and show me available indices sorted by
+                        document count?"</em>
+                </p>
+
+                <p>
+                    There isn't necessarily one ESKit operation that directly answers that
+                    question. The agent needs to get the latest cache, inspect the result,
+                    retrieve the relevant index information, sort it, and then present the
+                    answer.
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["User Request"] --> B["LLM"]
+
+                    B -->|"pull cache"| C["ESKit"]
+                    C -->|"Cache Result"| B
+
+                    B -->|"get index information"| C
+                    C -->|"Index Result"| B
+
+                    B --> E["Analyze + Sort"]
+                    E --> F["Final Response"]
+                </div>
+
+                <p>
+                    This is where the agent loop becomes useful. After receiving a tool result,
+                    the LLM can decide whether it needs another tool call or whether it has
+                    enough information to answer the user.
+                </p>
+
+            </section>
+
+
+            <section>
+
+                <h2>The <code>ask_user</code> Tool</h2>
+
+                <p>
+                    Once the agent can perform multiple operations, another problem appears.
+                    An LLM can ask the user questions, which means the application needs a way
+                    to distinguish a request for input from a final response. I didn't want to
+                    interpret the generated text to figure out whether the LLM was asking a
+                    question or simply making a statement.
+                </p>
+
+                <p>
+                    That's why I tried to add an <code>ask_user</code> tool for this purpose. The tool gives the
+                    LLM a way to request input from the user before continuing, and I can decide that it's the end of
+                    the interaction when there are no more tool calls.
+                </p>
+
+                <p>
+                    For example, if I first create an index and then ask the agent to delete it,
+                    the interaction can look like this:
+                </p>
+
+                <pre><code>$ eskit ai "Can you delete test-index-99?"
+
+LLM → ask_user
+      "This will delete index test-index-99. Continue?"
+
+User → yes
+
+LLM → index_delete
+      {"index": "test-index-99", "force": true}
+
+ESKit → SUCCESS
+
+LLM → "Index deleted successfully."</code></pre>
+
+                <p>
+                    The important part is that the application doesn't automatically enter an
+                    interactive confirmation mode every time a tool is called. Instead,
+                    <strong>the LLM decides whether it needs to ask the user something.</strong>
+                </p>
+
+
+                <p>
+                    Here's another example of how this can play out. I asked Claude to create an
+                    index, but initially didn't provide a name. The agent asked for the missing
+                    information and then asked whether a mapping should be applied. After I
+                    answered both questions, Claude produced the corresponding ESKit command but
+                    did not actually execute it. The important part is that I did not make the CLI to become interactive
+                    unconditionally when using the AI-mode.
+                </p>
+
+                <pre><code>$ eskit ai "Can you create an index?"
+
+LLM → ask_user
+      "What is the name of the index you want to create?"
+
+User → test-index99
+
+LLM → ask_user
+      "Would you like to apply a specific mapping?"
+
+User → no
+
+LLM → Final Response
+      "eskit index create test-index99"</code></pre>
+                <p>
+                    Please note that Claude decided that presenting the command was an appropriate final response for
+                    this
+                    particular interaction. The same agent is also capable of taking the next step and calling a tool to
+                    actually create the index when it determines that execution is appropriate.
+                    This is one of the things I like about this agent loop architecture: I don't have to force
+                    every interaction into an execution path or give it a system prompt to instruct it to use tools all
+                    the time.
+                </p>
+                <p>
+                    The LLM can ask for information, call a tool, or simply return a response. When it does choose to
+                    act, the
+                    request still goes through ESKit's normal validation, permissions, and safety
+                    mechanisms. And if I want to, I can also ask the agent to create the index for me explicitly, and it
+                    will do so.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Don't Force Every Interaction to Be Interactive</h2>
+
+                <p>
+                    One approach would have been to make every agent request interactive,
+                    requiring the user to approve each step. I didn't want to do that.
+                    A question such as <em>"Why are some indices yellow?"</em> doesn't require
+                    user input. The agent can inspect the available information and explain
+                    the result on its own.
+                </p>
+
+                <p>
+                    Likewise, a request such as:
+                </p>
+
+                <pre><code>eskit ai "Take a look at Host X and give me a quick health report. Tell me anything that looks worth investigating."</code></pre>
+
+                <p>
+                    is much more useful if the agent can investigate on its own. It can decide
+                    which tools to use, inspect their results, and continue until it has enough
+                    information to provide a useful report.
+                </p>
+
+                <p>
+                    This means the agent has three possible directions after each step:
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["LLM"] -->|"Tool Call"| B["ESKit"]
+                    A -->|"ask_user"| C["User Input"]
+                    A -->|"Final Response"| D["User"]
+                </div>
+
+                <p>
+                    The LLM decides whether it needs another tool, needs the user's input,
+                    or has enough information to finish.
+                </p>
+
+            </section>
+
+
+            <section>
+
+                <h2>A Health Report Example</h2>
+
+                <p>
+                    Now, taking look at the an example of question above to let agent to investigate
+                    the health of my HP-DO environment:
+                </p>
+
+                <pre><code>eskit ai "Take a look at HP-DO and give me a quick health report. Tell me anything that looks worth investigating."</code></pre>
+
+                <p>
+                    This request is intentionally vague. There isn't a predefined checklist
+                    in the application telling the agent exactly which commands it must run.
+                    Instead, the agent can inspect the information available through ESKit
+                    and decide what is relevant.
+                </p>
+
+                <p>
+                    In one run, the agent noticed that a number of Metricbeat indices were
+                    yellow and explained that this can happen when primary shards are allocated
+                    but replica shards cannot be allocated. On a single-node Elasticsearch
+                    deployment, that can be expected if replicas are configured but there
+                    isn't another node available to hold them.
+                </p>
+
+                <p>
+                    It also identified other things worth investigating, including snapshot
+                    currency and the state of individual indices.
+                </p>
+
+                <p>
+                    This is one of the parts of the experiment I find particularly interesting.
+                    The value isn't necessarily that the LLM knows something that ESKit doesn't.
+                    The value is that it can <strong>combine several pieces of information and
+                        decide what deserves attention.</strong>
+                </p>
+
+                <strong>Output from Claude:</strong>
+                <pre><code>
+$ eskit ai "Take a look at HP-DO and give me a quick health report. Tell me anything that looks worth investigating."
+
+## HP-DO Health Report
+
+### Overall Status: ⚠️ YELLOW — Attention Needed
+
+**Cluster:** tpotcluster (Elasticsearch 9.3.5)
+**Last Updated:** 2026-08-31 03:20 UTC
+
+### Critical Issues
+
+**Yellow Index Health**
+- 31 indices are reporting yellow health.
+- All 31 Metricbeat indices are affected.
+- The likely cause is replica shards that cannot be allocated on the current cluster.
+
+### Data Overview
+
+- **67** active indices
+- **36** green
+- **31** yellow
+- Largest index: `logstash-2026.08.30` — 1 GB / 2.7M documents
+- Recent data is flowing through September 1.
+- All indices are managed by the `tpot` ILM policy.
+
+### Backup Status
+
+- Repository: `daily_repo`
+- Latest snapshot found: **2026-08-23**
+- Recent snapshots report `SUCCESS` with no failures.
+- Data is current through **2026-09-01**, so the snapshot date is worth investigating.
+
+### Worth Investigating
+
+1. **Yellow replicas** — Check node count and shard allocation.
+2. **Snapshot age** — Verify that daily snapshots are still being created.
+3. **Test index** — `test_logstash-v2-test` appears to be a leftover test index.
+4. **Large index** — `logstash-2026.08.30` is significantly larger than surrounding days.
+
+Would you like me to investigate any of these issues in more detail?
+
+                </code></pre>
+
+                <p>
+                    Coming back to the ask_user tool, the LLM asking a question in its final response, and there is an
+                    important distinction between <strong>requesting input to continue</strong> and <strong>offering to
+                        do more work</strong>.
+                </p>
+
+                <p>
+                    In this example, the agent finishes its health report with:
+                </p>
+
+                <blockquote>
+                    Would you like me to investigate any of these issues in more detail?
+                </blockquote>
+
+                <p>
+                    This does not trigger the <code>ask_user</code> tool. The agent has already completed
+                    the task, so there is nothing it needs from the user to finish. It is simply
+                    offering a possible next step.
+                    The <code>ask_user</code> tool is different. It is used when the agent needs user input
+                    <em>before it can continue</em>—for example, when it wants to perform a potentially
+                    destructive operation and needs confirmation.
+                </p>
+
+                <p>
+                    I like this distinction because it means the application doesn't have to decide in
+                    advance whether an interaction should be conversational or interactive. The LLM can
+                    complete a task on its own, ask the user for input when it is actually necessary,
+                    or finish with an invitation to continue.
+                </p>
+
+                <p>
+                    The agent loop does not mean that every request must eventually result in a
+                    tool call. The LLM decides whether it has enough information to respond, ask
+                    the user for additional information, or take an action through ESKit. In some
+                    cases, as shown below, the agent may gather the information needed to operate but choose to present
+                    the corresponding ESKit command instead of
+                    executing it. I don't consider this a problem—the goal is not to force the
+                    LLM to execute every possible action, but to give it the ability to act when
+                    appropriate while keeping execution and safety within ESKit.
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["User"] -->|Request/Answer|B["LLM"]
+
+                    B -->|"Need more information"| A
+
+                    B -->|"Tool Call"| D["ESKit"]
+                    D -->|"Tool Result"| B
+
+                    B -->|"Final Response<br />e.g. show command"| A
+                </div>
+
+                <p>Other notable instructions I gave the LLM include:</p>
+                <ul>
+                    <li>Please get the latest cache, and show me available indices sorted by document counts.</li>
+                    <li>Which indices are expiring within 7 days?</li>
+                    <li>Are there any unhealthy indices?</li>
+                </ul>
+                <p>The interesting part is that there is no specific functionality in ESKit to sort or filter indices by
+                    expiration date or status.
+                    Claude was able to use information returned from multiple ESKit commands or filter the results based
+                    on the question.
+                    In addition, it used the output in human-friendly formats such as tables and sectional summaries
+                    instead of structured data like JSON.
+                </p>
+            </section>
+
+            <section>
+
+                <h2>The Agent Can Also Be Wrong</h2>
+
+                <p>
+                    Of course, this is still an LLM.
+                    During testing, I asked about the yellow indices and what could be done
+                    to fix them. The model correctly identified the general cause: replica
+                    shards could not be allocated.
+                    However, when it moved from diagnosis to remediation, it suggested an
+                    ESKit command that didn't actually exist for changing the replica count.
+                    That was a useful failure.
+                </p>
+
+                <p>
+                    The important thing is that neither ESKit nor the LLM could execute the invalid command.
+                    ESKit does not know such a command, and the LLM does not have the authority to execute arbitrary
+                    commands.
+                    The correct Elasticsearch operation would involve changing the index
+                    settings, such as setting the replica count to zero on a single-node
+                    deployment. But ESKit did not expose that operation as an AI tool,
+                    so the agent could not perform it through ESKit which is expected.
+                </p>
+
+                <p>In addition, the agent doesn't have any idea about how to contact the host or Elasticsearch cluster.
+                    It doesn't have access to any credentials to either SSH or Elasticsearch. It's all handled by ESKit.
+                </p>
+
+                <p>
+                    This reinforced one of the architectural principles from the earlier
+                    parts of the series:
+                </p>
+
+                <blockquote>
+                    <strong>The LLM should not be the authority for execution.</strong>
+                </blockquote>
+
+                <p>
+                    It can reason, investigate, and make recommendations, but ESKit remains
+                    responsible for validating and executing operations.
+                </p>
+
+            </section>
+
+
+            <section>
+
+                <h2>The Boundary Still Matters</h2>
+
+                <p>
+                    With the agent loop in place, the overall architecture now looks like this:
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["User"] -->|Request/Answer| B["LLM"]
+
+                    B -->|"Tool Call"| C["ESKit"]
+                    C -->|"Tool Result"| B
+
+                    B -->|"ask_user"| A
+
+                    C --> E["Validation"]
+                    E --> F["Permissions / Safety"]
+                    F --> G["Execution"]
+                    G --> C
+
+                    B -->|"Final Response"| A
+                </div>
+
+                <p>
+                    The LLM controls the reasoning loop. ESKit controls what can actually
+                    happen. That separation becomes more important as the agent becomes
+                    more capable. From a security perspective, I think it's important to keep a clear boundary between
+                    User, LLM, and ESKit.
+                </p>
+                <p>
+                    Also, during the development of the agent loop, I didn't worry about the LLM making a mistake and
+                    executing something destructive because the LLM doesn't have the authority to do it.
+                    Even if it uses a tool call, ESKit still asks the user for confirmation. There is an option to force
+                    the execution for administrative uses, but if I want to, I can hide it from the LLM tools.
+                    So if someone says to skip confirmation and execute the tool, it's okay for the LLM to issue the
+                    tool call because ESKit will enforce the confirmation.
+                </p>
+                <p>
+                    On top of that, ESKit has a concept of a "protected" host, where configuration must be set to
+                    execute any modifying operations, including deletions. This configuration can be managed per ESKit
+                    user.
+                </p>
+
+            </section>
+
+
+            <section>
+
+                <h2>What Changed?</h2>
+
+                <p>
+                    The implementation itself wasn't much code. The conceptual
+                    change was more important.
+                    Before the agent loop, the application essentially said:
+                    <em>"Here is a tool. Call it."</em>
+                </p>
+
+                <p>
+                    Now it says:
+                    <em>
+                        "Here are the tools. Decide what you need to do, use them as necessary,
+                        ask the user when you need input, and stop when you have completed the task."
+                    </em>
+                    That small change turns a tool-calling interface into something much closer
+                    to an agent. And importantly, I didn't have to build a complicated planner.
+                    The LLM became the planner for the reasoning loop, while ESKit remained the
+                    authority for execution.
+                </p>
+
+            </section>
+
+
+            <section>
+
+                <h2>Learnings So Far</h2>
+
+                <p>
+                    A few things stood out from these experiments.
+                </p>
+
+                <h3>Multi-step tasks are where the agent becomes useful</h3>
+
+                <p>
+                    Single tool calls are interesting, but the ability to inspect a result and
+                    decide what to do next is where the real value starts to appear.
+                </p>
+
+                <h3>User interaction doesn't have to be hard-coded</h3>
+
+                <p>
+                    Rather than forcing every operation into an interactive confirmation flow,
+                    <code>ask_user</code> gives the LLM a mechanism for requesting input only
+                    when it actually needs it.
+                </p>
+
+                <h3>The LLM should not be trusted as the execution authority</h3>
+
+                <p>
+                    It can reason, investigate, and make recommendations, but ESKit remains
+                    responsible for validating and executing operations.
+                </p>
+
+                <h3>Hallucinations are still useful to observe</h3>
+
+                <p>
+                    The incorrect recommendation for changing shard settings was a good reminder
+                    that a convincing explanation isn't necessarily an executable one. The
+                    architecture needs to assume that the model will occasionally be wrong.
+                </p>
+
+                <h3>The CLI is becoming an agent interface without replacing the CLI</h3>
+
+                <p>
+                    The original ESKit commands are still there. The AI layer provides
+                    another way to interact with them—one that can reason across multiple
+                    commands and present the result more naturally.
+                </p>
+
+            </section>
+
+
+            <section>
+
+                <h2>From CLI Helper to AI-Native CLI</h2>
+
+                <p>
+                    Looking back at the progression so far:
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["Part 1 - Argparse → AI CLI Helper"]
+                    A --> C["Part 2 - Tool calls → ESKit commands"]
+                    C --> D["Part 3 - Separate Execution and Presentation"]
+                    D --> E["Part 4 - 25K tokens → 7K-token"]
+                    E --> F["Part 5 - One tool call → Agent loop"]
+                </div>
+
+                <p>
+                    The original goal was fairly simple: make ESKit easier to use through
+                    natural language. The interesting part has been discovering that the
+                    existing CLI already contains much of the structure needed for an
+                    AI interface.
+                </p>
+
+                <p>
+                    The AI layer doesn't need to replace the CLI. It can sit on top of it.
+                </p>
+
+                <p>
+                    And now that the agent loop is working, the next question becomes less
+                    about <strong>whether the LLM can operate ESKit</strong>, and more about
+                    <strong>how well we can observe, control, and improve that operation.</strong>
+                </p>
+
+            </section>
+
+            <section>
+
+                <p>
+                    <a href="https://github.com/damixen/eskit/tree/eskit-ai" target="_blank" rel="noopener noreferrer">
+                        ESKit — eskit-ai branch →
+                    </a>
+                </p>
+
+                <blockquote>
+                    This is part of an ongoing series of experiments exploring
+                    AI-assisted CLI interfaces and agent architectures in ESKit.
+                </blockquote>
+
+            </section>
+
+        </article>
+
+
+    </main>
+
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="/about.html">About</a>
+            <a href="/collaborate.html">Collaborate</a>
+            <a href="https://github.com/damixen" target="_blank" rel="noopener noreferrer">
+                GitHub
+            </a>
+        </div>
+
+        <p class="footer-version">GingerPot 2026.08.5</p>
+    </footer>
+
+</body>
+
+</html>
