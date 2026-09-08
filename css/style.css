@@ -28,6 +28,9 @@
   --error: #ff8a8a;
 
   color-scheme: dark light;
+
+  --as-detail-bg: #202733;
+  --as-detail-text: #c5ced9;
 }
 
 /* ==========================================
@@ -59,6 +62,9 @@
     --tag-border: rgba(0, 119, 182, 0.25);
 
     --error: #b42318;
+
+    -as-detail-bg: #f0f3f7;
+    --as-detail-text: #4b5563;
   }
 }
 
@@ -1038,4 +1044,39 @@ button:disabled {
   .series {
     font-size: 0.95rem;
   }
+}
+
+/* ==========================================
+   AS Organization Details
+   ========================================== */
+
+.as-detail-row>td {
+  padding: 10px 12px;
+  background: var(--control-card);
+  border-left: 4px solid var(--accent);
+}
+
+.as-country-table {
+  width: 100%;
+  margin: 0;
+}
+
+.as-country-table td {
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.as-country-table td:first-child {
+  padding-left: 2rem;
+}
+
+.as-country-table td:last-child {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.as-country-table tr:last-child td {
+  border-bottom: none;
 }

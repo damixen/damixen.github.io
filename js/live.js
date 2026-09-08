@@ -105,6 +105,10 @@ async function loadFeed() {
 
     updateHoneypots(telemetry.honeypot_types);
 
+    const asList = Array.isArray(telemetry.as) ? telemetry.as : [];
+
+    updateAS(asList);
+
     updateSparkline(telemetry.sparkline);
 
     setFeedStatus("Telemetry loaded successfully.");
@@ -206,6 +210,95 @@ function updateHoneypots(honeypots) {
     row.appendChild(count);
 
     table.appendChild(row);
+  });
+}
+
+function updateAS(asList) {
+  const table = document.getElementById("as-table");
+  table.innerHTML = "";
+
+  asList.forEach((item) => {
+    const row = document.createElement("tr");
+
+    const organization = document.createElement("td");
+    organization.textContent = item.as_org || "Unknown";
+
+    const asn = document.createElement("td");
+    asn.textContent = `AS${item.asn}`;
+
+    const events = document.createElement("td");
+    events.textContent = item.events.toLocaleString();
+
+    const countries = document.createElement("td");
+    countries.textContent = item.countries?.length ?? 0;
+
+    const toggleCell = document.createElement("td");
+    const toggle = document.createElement("button");
+
+    toggle.className = "as-toggle";
+    toggle.textContent = "▸";
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute(
+      "aria-label",
+      `Show countries for ${item.as_org || "AS"}`,
+    );
+
+    toggleCell.appendChild(toggle);
+
+    row.appendChild(organization);
+    row.appendChild(asn);
+    row.appendChild(events);
+    row.appendChild(countries);
+    row.appendChild(toggleCell);
+
+    table.appendChild(row);
+
+    if (item.countries && item.countries.length > 0) {
+      const detailRow = document.createElement("tr");
+      detailRow.className = "as-detail-row";
+      detailRow.hidden = true;
+
+      const detailCell = document.createElement("td");
+      detailCell.colSpan = 5;
+
+      const countryTable = document.createElement("table");
+      countryTable.className = "dashboard-table as-country-table";
+
+      item.countries.forEach((country) => {
+        const countryRow = document.createElement("tr");
+
+        const countryName = document.createElement("td");
+        countryName.textContent = country.country;
+
+        const countryEvents = document.createElement("td");
+        countryEvents.textContent = country.events.toLocaleString();
+
+        countryRow.appendChild(countryName);
+        countryRow.appendChild(countryEvents);
+
+        countryTable.appendChild(countryRow);
+      });
+
+      detailCell.appendChild(countryTable);
+      detailRow.appendChild(detailCell);
+      table.appendChild(detailRow);
+
+      toggle.addEventListener("click", () => {
+        const expanded =
+          toggle.getAttribute("aria-expanded") === "true";
+
+        toggle.setAttribute("aria-expanded", String(!expanded));
+        toggle.textContent = expanded ? "▸" : "▾";
+        toggle.setAttribute(
+          "aria-label",
+          expanded
+            ? `Show countries for ${item.as_org || "AS"}`
+            : `Hide countries for ${item.as_org || "AS"}`,
+        );
+
+        detailRow.hidden = expanded;
+      });
+    }
   });
 }
 

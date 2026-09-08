@@ -1,223 +1,232 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Explore observed internet activity and security telemetry collected from an internet-facing honeypot."
-    />
-    <title>Live Feed | GingerPot</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Explore observed internet activity and security telemetry collected from an internet-facing honeypot." />
+  <title>Live Feed | GingerPot</title>
 
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-    <link rel="icon" href="favicon.ico" sizes="any" />
-    <link rel="icon" type="image/png" href="favicon-32x32.png" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
 
-    <link rel="stylesheet" href="css/style.css" />
-  </head>
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="favicon-32x32.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
-  <body>
-    <nav class="navbar">
-      <div class="navbar-inner">
-        <div class="nav-links">
-          <a href="/"> Home </a>
-          <a class="active" href="/live.html"> Live </a>
-          <a href="/blog.html">Blog</a>
-          <a href="/about.html"> About </a>
-          <a href="/collaborate.html"> Collaborate </a>
-        </div>
-      </div>
-    </nav>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
 
-    <div class="container">
-      <section class="card live-toolbar">
-        <div class="section-header">
-          <span class="status-dot"></span>
-          <h2>Live Feed</h2>
-          <label class="pin-option">
-            <input type="checkbox" id="pin-controls" />
-            Pin controls
-          </label>
-        </div>
-
-        <p class="toolbar-description">
-          Observed internet activity from an internet-facing honeypot.
-        </p>
-
-        <div id="feed-controls" class="feed-controls">
-          <div class="control-group">
-            <label for="host">Sensor</label>
-
-            <select id="host">
-              <option value="hp-do-sfo3">US West Coast (hp-do-sfo3)</option>
-            </select>
-          </div>
-
-          <div class="control-group">
-            <label>View</label>
-
-            <div class="radio-group">
-              <label>
-                <input type="radio" name="mode" value="latest" checked />
-                Last 24 Hours
-              </label>
-
-              <label>
-                <input type="radio" name="mode" value="daily" />
-                Daily
-              </label>
-            </div>
-          </div>
-
-          <div class="control-group">
-            <label for="date">Date</label>
-            <input id="date" type="date" />
-          </div>
-
-          <div class="control-group">
-            <button id="load-feed" disabled>Refresh</button>
-          </div>
-        </div>
-
-        <div class="feed-meta">
-          <span id="feed-status" aria-live="polite"> Last update: -- </span>
-
-          <span> • Data updated hourly </span>
-
-          <button id="toggle-controls" class="toolbar-toggle">
-            Hide Controls
-          </button>
-        </div>
-
-        <div id="collapsed-summary" class="collapsed-summary">
-          <span id="summary-sensor">Sensor: --</span>
-
-          <button id="show-controls" class="toolbar-toggle">
-            Show Controls
-          </button>
-        </div>
-      </section>
-
-      <section class="card">
-        <div class="section-header">
-          <span class="status-dot"></span>
-
-          <h2>Current Activity</h2>
-        </div>
-
-        <div class="stats">
-          <div class="stat">
-            <div id="events" class="number">-</div>
-
-            <div class="label">Events (24h)</div>
-          </div>
-
-          <div class="stat">
-            <div id="uniqueIps" class="number">-</div>
-
-            <div class="label">Unique IPs</div>
-          </div>
-
-          <div class="stat">
-            <div id="countryCount" class="number">-</div>
-
-            <div class="label">Countries</div>
-          </div>
-        </div>
-        <p id="updated" class="status-note"></p>
-      </section>
-
-      <section class="card">
-        <div class="section-header">
-          <span class="status-dot"></span>
-
-          <h2>Activity Trend</h2>
-        </div>
-
-        <div id="sparkline-container">
-          <div class="chart-wrapper">
-            <svg
-              id="sparkline"
-              viewBox="0 0 400 180"
-              preserveAspectRatio="none"
-            ></svg>
-          </div>
-
-          <div class="x-label">Time (UTC) — Last 24 Hours</div>
-        </div>
-      </section>
-
-      <section class="card">
-        <div class="section-header">
-          <span class="status-dot"></span>
-
-          <h2>Top Ports</h2>
-        </div>
-
-        <div id="ports-list" class="tag-list"></div>
-      </section>
-
-      <section class="card">
-        <div class="section-header">
-          <span class="status-dot"></span>
-
-          <h2>Top Countries</h2>
-        </div>
-
-        <table class="dashboard-table">
-          <tr>
-            <th>Country</th>
-
-            <th>Events</th>
-          </tr>
-
-          <tbody id="countries-table"></tbody>
-        </table>
-      </section>
-      <section class="card">
-        <div class="section-header">
-          <span class="status-dot"></span>
-
-          <h2>Honeypot Activity</h2>
-        </div>
-
-        <table class="dashboard-table">
-          <tr>
-            <th>Honeypot</th>
-
-            <th>Events</th>
-          </tr>
-
-          <tbody id="honeypots-table"></tbody>
-        </table>
-      </section>
-    </div>
-
-    <footer class="footer">
-      <div class="footer-links">
+<body>
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="nav-links">
+        <a href="/"> Home </a>
+        <a class="active" href="/live.html"> Live </a>
+        <a href="/blog.html">Blog</a>
         <a href="/about.html"> About </a>
-
         <a href="/collaborate.html"> Collaborate </a>
-
-        <a
-          href="https://github.com/damixen"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          GitHub
-        </a>
       </div>
-      <p class="footer-version">GingerPot 2026.08.5</p>
-    </footer>
+    </div>
+  </nav>
 
-    <script src="js/live.js"></script>
-  </body>
+  <div class="container">
+    <section class="card live-toolbar">
+      <div class="section-header">
+        <span class="status-dot"></span>
+        <h2>Live Feed</h2>
+        <label class="pin-option">
+          <input type="checkbox" id="pin-controls" />
+          Pin controls
+        </label>
+      </div>
+
+      <p class="toolbar-description">
+        Observed internet activity from an internet-facing honeypot.
+      </p>
+
+      <div id="feed-controls" class="feed-controls">
+        <div class="control-group">
+          <label for="host">Sensor</label>
+
+          <select id="host">
+            <option value="hp-do-sfo3">US West Coast (hp-do-sfo3)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>View</label>
+
+          <div class="radio-group">
+            <label>
+              <input type="radio" name="mode" value="latest" checked />
+              Last 24 Hours
+            </label>
+
+            <label>
+              <input type="radio" name="mode" value="daily" />
+              Daily
+            </label>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="date">Date</label>
+          <input id="date" type="date" />
+        </div>
+
+        <div class="control-group">
+          <button id="load-feed" disabled>Refresh</button>
+        </div>
+      </div>
+
+      <div class="feed-meta">
+        <span id="feed-status" aria-live="polite"> Last update: -- </span>
+
+        <span> • Data updated hourly </span>
+
+        <button id="toggle-controls" class="toolbar-toggle">
+          Hide Controls
+        </button>
+      </div>
+
+      <div id="collapsed-summary" class="collapsed-summary">
+        <span id="summary-sensor">Sensor: --</span>
+
+        <button id="show-controls" class="toolbar-toggle">
+          Show Controls
+        </button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <span class="status-dot"></span>
+
+        <h2>Current Activity</h2>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div id="events" class="number">-</div>
+
+          <div class="label">Events (24h)</div>
+        </div>
+
+        <div class="stat">
+          <div id="uniqueIps" class="number">-</div>
+
+          <div class="label">Unique IPs</div>
+        </div>
+
+        <div class="stat">
+          <div id="countryCount" class="number">-</div>
+
+          <div class="label">Countries</div>
+        </div>
+      </div>
+      <p id="updated" class="status-note"></p>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <span class="status-dot"></span>
+
+        <h2>Activity Trend</h2>
+      </div>
+
+      <div id="sparkline-container">
+        <div class="chart-wrapper">
+          <svg id="sparkline" viewBox="0 0 400 180" preserveAspectRatio="none"></svg>
+        </div>
+
+        <div class="x-label">Time (UTC) — Last 24 Hours</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <span class="status-dot"></span>
+
+        <h2>Top Ports</h2>
+      </div>
+
+      <div id="ports-list" class="tag-list"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <span class="status-dot"></span>
+
+        <h2>Top Countries</h2>
+      </div>
+
+      <table class="dashboard-table">
+        <tr>
+          <th>Country</th>
+
+          <th>Events</th>
+        </tr>
+
+        <tbody id="countries-table"></tbody>
+      </table>
+    </section>
+    <section class="card">
+      <div class="section-header">
+        <span class="status-dot"></span>
+
+        <h2>Top AS Organizations</h2>
+      </div>
+
+      <table class="dashboard-table">
+        <tr>
+          <th>Organization</th>
+          <th>ASN</th>
+          <th>Events</th>
+          <th>Countries</th>
+        </tr>
+
+        <tbody id="as-table"></tbody>
+      </table>
+    </section>
+    <section class="card">
+      <div class="section-header">
+        <span class="status-dot"></span>
+
+        <h2>Honeypot Activity</h2>
+      </div>
+
+      <table class="dashboard-table">
+        <tr>
+          <th>Honeypot</th>
+
+          <th>Events</th>
+        </tr>
+
+        <tbody id="honeypots-table"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="/about.html"> About </a>
+
+      <a href="/collaborate.html"> Collaborate </a>
+
+      <a href="https://github.com/damixen" target="_blank" rel="noopener noreferrer">
+        GitHub
+      </a>
+    </div>
+    <p class="footer-version">GingerPot 2026.08.5</p>
+  </footer>
+
+  <script src="js/live.js"></script>
+</body>
+
 </html>
