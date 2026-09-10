@@ -126,7 +126,13 @@ async function loadFeed() {
 
     updateCountries(telemetry.countries);
 
-    updateHoneypots(telemetry.honeypot_types);
+    updateHoneypots(
+      telemetry.honeypot_types,
+      telemetry.cowrie,
+      telemetry.dionaea,
+      telemetry.sentrypeer,
+    );
+
 
     const asList = Array.isArray(telemetry.as)
       ? telemetry.as
@@ -181,7 +187,7 @@ function updateProtocols(protocols) {
 
 function formatPort(port) {
   return portServices[port]
-    ? `${port} ${portServices[port]}`
+    ? `${port} (${portServices[port]})`
     : `${port}`;
 }
 
@@ -209,7 +215,7 @@ function updateCountries(countries) {
 
   table.innerHTML = "";
 
-  countries.forEach((item) => {
+  countries.slice(0, 5).forEach((item) => {
     const row = document.createElement("tr");
 
     const country = document.createElement("td");
@@ -225,33 +231,576 @@ function updateCountries(countries) {
   });
 }
 
-function updateHoneypots(honeypots) {
-  const table = document.getElementById("honeypots-table");
+function updateHoneypots(
+  honeypotTypes,
+  cowrie,
+  dionaea,
+  sentrypeer,
+) {
+  const table =
+    document.getElementById("honeypots-table");
 
   table.innerHTML = "";
 
-  honeypots.forEach((item) => {
+  if (!Array.isArray(honeypotTypes)) {
+    return;
+  }
+
+  const detailsByType = {
+    Cowrie: cowrie,
+    Dionaea: dionaea,
+    Sentrypeer: sentrypeer,
+  };
+
+  const hasHpDetails = cowrie || dionaea || sentrypeer
+
+  honeypotTypes.forEach((item) => {
     const row = document.createElement("tr");
 
-    const type = document.createElement("td");
-    type.textContent = item.type;
+    row.setAttribute(
+      "aria-expanded",
+      "false",
+    );
 
-    const count = document.createElement("td");
-    count.textContent = item.count.toLocaleString();
+    const honeypot =
+      document.createElement("td");
 
-    row.appendChild(type);
+    honeypot.textContent =
+      item.type || "Unknown";
+
+    const count =
+      document.createElement("td");
+
+    count.textContent =
+      typeof item.count === "number"
+        ? item.count.toLocaleString()
+        : "—";
+
+    const details =
+      document.createElement("td");
+
+    details.className =
+      "honeypot-details-cell";
+
+    const honeypotDetails =
+      detailsByType[item.type];
+
+    row.appendChild(honeypot);
     row.appendChild(count);
+    row.appendChild(details);
+
+    if (honeypotDetails) {
+      const viewButton =
+        document.createElement("button");
+
+      viewButton.className =
+        "as-view-button";
+
+      viewButton.type = "button";
+
+      viewButton.textContent =
+        "View";
+
+      viewButton.setAttribute(
+        "aria-label",
+        `View details for ${item.type || "honeypot"}`,
+      );
+
+      details.appendChild(viewButton);
+
+      const detailRow =
+        document.createElement("tr");
+
+      detailRow.className =
+        "honeypot-detail-row";
+
+      detailRow.hidden = true;
+
+      const detailCell =
+        document.createElement("td");
+
+      detailCell.colSpan = 3;
+
+      renderHoneypotDetail(
+        detailCell,
+        item.type,
+        honeypotDetails,
+      );
+
+      detailRow.appendChild(detailCell);
+
+      const toggleRow = () => {
+        const expanded =
+          row.getAttribute("aria-expanded") ===
+          "true";
+
+        row.setAttribute(
+          "aria-expanded",
+          String(!expanded),
+        );
+
+        detailRow.hidden = expanded;
+
+        viewButton.textContent =
+          expanded
+            ? "View"
+            : "Hide";
+
+        viewButton.classList.toggle(
+          "is-expanded",
+          !expanded,
+        );
+
+        viewButton.setAttribute(
+          "aria-label",
+          expanded
+            ? `View details for ${item.type || "honeypot"}`
+            : `Hide details for ${item.type || "honeypot"}`,
+        );
+      };
+
+      viewButton.addEventListener(
+        "click",
+        (event) => {
+          event.stopPropagation();
+
+          toggleRow();
+        },
+      );
+
+      table.appendChild(row);
+      table.appendChild(detailRow);
+    } else {
+      if (hasHpDetails) {
+        details.textContent = "Coming soon";
+      }
+      else {
+        details.textContent = "-";
+      }
+
+
+
+      table.appendChild(row);
+    }
+  });
+}
+
+function renderHoneypotDetail(
+  container,
+  type,
+  details,
+) {
+  if (type === "Cowrie") {
+    renderCowrieDetails(
+      container,
+      details,
+    );
+    return;
+  }
+
+  if (type === "Dionaea") {
+    renderDionaeaDetails(
+      container,
+      details,
+    );
+    return;
+  }
+
+  if (type === "Sentrypeer") {
+    renderSentrypeerDetails(
+      container,
+      details,
+    );
+  }
+}
+
+function createDetailSection(
+  container,
+  title,
+) {
+  const section =
+    document.createElement("div");
+
+  section.className =
+    "honeypot-detail-section";
+
+  container.appendChild(section);
+
+  return section;
+}
+
+
+function renderCommonHoneypotDetails(
+  container,
+  honeypot,
+) {
+  if (!honeypot) {
+    return;
+  }
+
+  const section =
+    document.createElement("div");
+
+  section.className =
+    "honeypot-detail-grid";
+
+  addDetailMetric(
+    section,
+    "Activity",
+    honeypot.events,
+  );
+
+  addDetailMetric(
+    section,
+    "Unique IPs",
+    honeypot.unique_ips,
+  );
+
+  addDetailList(
+    section,
+    "Top Countries",
+    honeypot.countries,
+    "country",
+    "count",
+  );
+
+  addASNList(
+    section,
+    "Top ASNs",
+    honeypot.as,
+  );
+
+  addDetailList(
+    section,
+    "Top Ports",
+    honeypot.ports,
+    "port",
+    "count",
+    formatPortEntry,
+  );
+
+  container.appendChild(section);
+}
+
+
+function formatPortEntry(item) {
+  if (!item || item.port === undefined) {
+    return "Unknown";
+  }
+
+  return formatPort(item.port);
+}
+
+
+function renderCowrieDetails(
+  container,
+  details,
+) {
+  if (!details) {
+    return;
+  }
+
+  const section =
+    createDetailSection(
+      container,
+      "Cowrie Activity",
+    );
+
+  renderCommonHoneypotDetails(
+    section,
+    details,
+  );
+
+  addDetailList(
+    section,
+    "Event Types",
+    details.event_types,
+    "value",
+    "count",
+  );
+
+  addDetailList(
+    section,
+    "Commands",
+    details.commands,
+    "value",
+    "count",
+  );
+
+  addDetailList(
+    section,
+    "Downloads",
+    details.downloads,
+    "value",
+    "count",
+  );
+
+  addDetailList(
+    section,
+    "Files",
+    details.files,
+    "value",
+    "count",
+  );
+
+  addDetailList(
+    section,
+    "SSH Client Fingerprints",
+    details.ssh_client_fingerprints,
+    "value",
+    "count",
+  );
+
+  addDetailList(
+    section,
+    "Credentials",
+    details.credentials,
+    "username",
+    "count",
+  );
+}
+
+
+function renderDionaeaDetails(
+  container,
+  details,
+) {
+  if (!details) {
+    return;
+  }
+
+  const section =
+    createDetailSection(
+      container,
+      "Dionaea Activity",
+    );
+
+  renderCommonHoneypotDetails(
+    section,
+    details,
+  );
+
+  addDetailList(
+    section,
+    "Protocols",
+    details.protocol,
+    "value",
+    "count",
+  );
+
+  addDetailList(
+    section,
+    "Credentials",
+    details.credentials,
+    "username",
+    "count",
+  );
+}
+
+
+function renderSentrypeerDetails(
+  container,
+  details,
+) {
+  if (!details) {
+    return;
+  }
+
+  const section =
+    createDetailSection(
+      container,
+      "SentryPeer Activity",
+    );
+
+  renderCommonHoneypotDetails(
+    section,
+    details,
+  );
+
+  addDetailList(
+    section,
+    "SIP Methods",
+    details.sip_method,
+    "value",
+    "count",
+  );
+
+  addDetailList(
+    section,
+    "SIP User Agents",
+    details.sip_user_agent,
+    "value",
+    "count",
+  );
+
+  renderSourceNumbers(
+    section,
+    details.source_numbers,
+  );
+}
+
+
+function renderSourceNumbers(container, values) {
+  if (
+    !Array.isArray(values) ||
+    values.length === 0
+  ) {
+    return;
+  }
+
+  const item =
+    document.createElement("div");
+
+  item.className =
+    "honeypot-detail-item";
+
+  const header =
+    document.createElement("button");
+
+  header.className =
+    "honeypot-detail-toggle";
+
+  header.type = "button";
+
+  header.setAttribute(
+    "aria-expanded",
+    "false",
+  );
+
+  const labelElement =
+    document.createElement("span");
+
+  labelElement.textContent =
+    "Source Activity";
+
+  const viewButton =
+    document.createElement("span");
+
+  viewButton.className =
+    "honeypot-detail-view-button";
+
+  viewButton.textContent =
+    "View";
+
+  header.appendChild(labelElement);
+  header.appendChild(viewButton);
+
+  const content =
+    document.createElement("div");
+
+  content.className =
+    "honeypot-detail-content";
+
+  content.hidden = true;
+
+  const table =
+    document.createElement("table");
+
+  table.className =
+    "dashboard-table honeypot-detail-table";
+
+  // Column headers
+  const headerRow =
+    document.createElement("tr");
+
+  ["Source IP", "Activity", "Unique Call #"].forEach(
+    (text) => {
+      const th =
+        document.createElement("th");
+
+      th.textContent = text;
+
+      headerRow.appendChild(th);
+    },
+  );
+
+  table.appendChild(headerRow);
+
+  values.forEach((item) => {
+    const row =
+      document.createElement("tr");
+
+    const source =
+      document.createElement("td");
+
+    source.textContent =
+      item.source || "Unknown";
+
+    const events =
+      document.createElement("td");
+
+    events.textContent =
+      typeof item.events === "number"
+        ? item.events.toLocaleString()
+        : "—";
+
+    const targets =
+      document.createElement("td");
+
+    targets.textContent =
+      typeof item.unique_targets === "number"
+        ? item.unique_targets.toLocaleString()
+        : "—";
+
+    row.appendChild(source);
+    row.appendChild(events);
+    row.appendChild(targets);
 
     table.appendChild(row);
   });
+
+  content.appendChild(table);
+
+  header.addEventListener(
+    "click",
+    () => {
+      const expanded =
+        header.getAttribute(
+          "aria-expanded",
+        ) === "true";
+
+      header.setAttribute(
+        "aria-expanded",
+        String(!expanded),
+      );
+
+      content.hidden = expanded;
+
+      viewButton.textContent =
+        expanded ? "View" : "Hide";
+
+      viewButton.classList.toggle(
+        "is-expanded",
+        !expanded,
+      );
+    },
+  );
+
+  item.appendChild(header);
+  item.appendChild(content);
+
+  container.appendChild(item);
+
+  const note =
+    document.createElement("p");
+
+  note.className =
+    "status-note";
+
+  note.textContent =
+    "Some events do not contain a called-number value, and values may not represent normalized telephone numbers.";
+
+  container.appendChild(note);
 }
+
+
 
 function updateAS(asList) {
   const table = document.getElementById("as-table");
 
   table.innerHTML = "";
 
-  asList.forEach((item) => {
+  asList.slice(0, 5).forEach((item) => {
     const row = document.createElement("tr");
 
     const organization = document.createElement("td");
@@ -340,6 +889,12 @@ function updateAS(asList) {
         viewButton.textContent = expanded
           ? `View (${item.countries.length})`
           : `Hide (${item.countries.length})`;
+
+        viewButton.classList.toggle(
+          "is-expanded",
+          !expanded,
+        );
+
 
         viewButton.setAttribute(
           "aria-label",
@@ -997,4 +1552,320 @@ function updateModeLabels(mode, date) {
     trendLabel.textContent =
       `Time (UTC) — ${formatWeekRange(selectedDate)}`;
   }
+}
+
+function addDetailMetric(
+  container,
+  label,
+  value,
+) {
+  if (typeof value !== "number") {
+    return;
+  }
+
+  const item = document.createElement("div");
+  item.className = "honeypot-detail-metric";
+
+  const labelElement =
+    document.createElement("div");
+
+  labelElement.className =
+    "honeypot-detail-label";
+
+  labelElement.textContent = label;
+
+  const valueElement =
+    document.createElement("div");
+
+  valueElement.className =
+    "honeypot-detail-value";
+
+  valueElement.textContent =
+    value.toLocaleString();
+
+  item.appendChild(labelElement);
+  item.appendChild(valueElement);
+
+  container.appendChild(item);
+}
+
+
+function addDetailList(
+  container,
+  label,
+  values,
+  keyField,
+  countField,
+  formatter,
+) {
+  if (
+    !Array.isArray(values) ||
+    values.length === 0
+  ) {
+    return;
+  }
+
+  const item =
+    document.createElement("div");
+
+  item.className =
+    "honeypot-detail-item";
+
+  const header =
+    document.createElement("button");
+
+  header.className =
+    "honeypot-detail-toggle";
+
+  header.type = "button";
+
+  header.setAttribute(
+    "aria-expanded",
+    "false",
+  );
+
+  const labelElement =
+    document.createElement("span");
+
+  labelElement.textContent = label;
+
+  const viewButton =
+    document.createElement("span");
+
+  viewButton.className =
+    "honeypot-detail-view-button";
+
+  viewButton.textContent =
+    "View";
+
+  header.appendChild(labelElement);
+  header.appendChild(viewButton);
+
+  const content =
+    document.createElement("div");
+
+  content.className =
+    "honeypot-detail-content";
+
+  content.hidden = true;
+
+  const table =
+    document.createElement("table");
+
+  table.className =
+    "dashboard-table honeypot-detail-table";
+
+  table.id = "honeypots-table-container";
+
+  values.slice(0, 10).forEach(
+    (entry) => {
+      const row =
+        document.createElement("tr");
+
+      let value;
+
+      if (formatter) {
+        value = formatter(entry);
+      } else if (keyField) {
+        value = entry[keyField];
+      } else {
+        value = entry;
+      }
+
+      const valueCell =
+        document.createElement("td");
+
+      valueCell.textContent =
+        value ?? "Unknown";
+
+      const countCell =
+        document.createElement("td");
+
+      countCell.textContent =
+        countField &&
+          typeof entry[countField] === "number"
+          ? entry[countField].toLocaleString()
+          : "—";
+
+      row.appendChild(valueCell);
+      row.appendChild(countCell);
+
+      table.appendChild(row);
+    },
+  );
+
+  content.appendChild(table);
+
+  header.addEventListener(
+    "click",
+    () => {
+      const expanded =
+        header.getAttribute(
+          "aria-expanded",
+        ) === "true";
+
+      header.setAttribute(
+        "aria-expanded",
+        String(!expanded),
+      );
+
+      content.hidden = expanded;
+
+      viewButton.textContent =
+        expanded ? "View" : "Hide";
+
+      viewButton.classList.toggle(
+        "is-expanded",
+        !expanded,
+      );
+    },
+  );
+
+  item.appendChild(header);
+  item.appendChild(content);
+
+  container.appendChild(item);
+}
+
+function addASNList(container, label, values) {
+  if (
+    !Array.isArray(values) ||
+    values.length === 0
+  ) {
+    return;
+  }
+
+  const item =
+    document.createElement("div");
+
+  item.className =
+    "honeypot-detail-item";
+
+  const header =
+    document.createElement("button");
+
+  header.className =
+    "honeypot-detail-toggle";
+
+  header.type = "button";
+
+  header.setAttribute(
+    "aria-expanded",
+    "false",
+  );
+
+  const labelElement =
+    document.createElement("span");
+
+  labelElement.textContent =
+    label;
+
+  const viewButton =
+    document.createElement("span");
+
+  viewButton.className =
+    "honeypot-detail-view-button";
+
+  viewButton.textContent =
+    "View";
+
+  header.appendChild(labelElement);
+  header.appendChild(viewButton);
+
+  const content =
+    document.createElement("div");
+
+  content.className =
+    "honeypot-detail-content";
+
+  content.hidden = true;
+
+  const table =
+    document.createElement("table");
+
+  table.className =
+    "dashboard-table honeypot-detail-table";
+
+  const headerRow =
+    document.createElement("tr");
+
+  ["Organization", "ASN", "Events"].forEach(
+    (text) => {
+      const th =
+        document.createElement("th");
+
+      th.textContent =
+        text;
+
+      headerRow.appendChild(th);
+    },
+  );
+
+  table.appendChild(headerRow);
+
+  values.slice(0, 10).forEach(
+    (entry) => {
+      const row =
+        document.createElement("tr");
+
+      const organization =
+        document.createElement("td");
+
+      organization.textContent =
+        entry.as_org || "Unknown";
+
+      const asn =
+        document.createElement("td");
+
+      asn.textContent = entry.asn
+        ? `AS${entry.asn}`
+        : "Unknown";
+
+      const events =
+        document.createElement("td");
+
+      events.textContent =
+        typeof entry.count === "number"
+          ? entry.count.toLocaleString()
+          : "—";
+
+      row.appendChild(organization);
+      row.appendChild(asn);
+      row.appendChild(events);
+
+      table.appendChild(row);
+    },
+  );
+
+  content.appendChild(table);
+
+  header.addEventListener(
+    "click",
+    () => {
+      const expanded =
+        header.getAttribute(
+          "aria-expanded",
+        ) === "true";
+
+      header.setAttribute(
+        "aria-expanded",
+        String(!expanded),
+      );
+
+      content.hidden = expanded;
+
+      viewButton.textContent =
+        expanded ? "View" : "Hide";
+
+      viewButton.classList.toggle(
+        "is-expanded",
+        !expanded,
+      );
+    },
+  );
+
+  item.appendChild(header);
+  item.appendChild(content);
+
+  container.appendChild(item);
 }
