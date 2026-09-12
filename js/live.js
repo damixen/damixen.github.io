@@ -1016,7 +1016,13 @@ function updateDateState() {
   date.disabled =
     mode !== "daily" && mode !== "weekly";
 
+  const dataUpdateStatus =
+    document.getElementById("data-update-status");
+
   if (mode === "weekly") {
+    dataUpdateStatus.textContent =
+      "• Data updated through last Sunday";
+
     date.max = formatDateInputValue(
       getLastCompletedWeekEnd(),
     );
@@ -1030,6 +1036,8 @@ function updateDateState() {
         formatWeekRange(selectedDate);
     }
   } else {
+    dataUpdateStatus.textContent =
+      "• Data updated hourly";
     date.removeAttribute("max");
     weekRange.textContent = "";
   }
