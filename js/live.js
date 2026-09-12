@@ -1036,8 +1036,14 @@ function updateDateState() {
         formatWeekRange(selectedDate);
     }
   } else {
-    dataUpdateStatus.textContent =
+    if (mode === "latest") {
+      dataUpdateStatus.textContent =
       "• Data updated hourly";
+    } else {
+      dataUpdateStatus.textContent =
+      "• Data updated daily";
+    }
+    
     date.removeAttribute("max");
     weekRange.textContent = "";
   }
