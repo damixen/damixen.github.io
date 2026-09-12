@@ -1,75 +1,73 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Learn about GingerPot, a security monitoring project built around an internet-facing T-Pot honeypot and security telemetry pipeline."
-    />
-    <title>About | GingerPot</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Learn about GingerPot, a security monitoring project built around an internet-facing T-Pot honeypot and security telemetry pipeline." />
+  <title>About | GingerPot</title>
 
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-    <link rel="icon" href="favicon.ico" sizes="any" />
-    <link rel="icon" type="image/png" href="favicon-32x32.png" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
 
-    <link rel="stylesheet" href="css/style.css" />
-  </head>
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="favicon-32x32.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
-  <body>
-    <nav class="navbar">
-      <div class="navbar-inner">
-        <div class="nav-links">
-          <a href="/">Home</a>
-          <a href="/live.html">Live</a>
-          <a href="/blog.html">Blog</a>
-          <a class="active" href="/about.html">About</a>
-          <a href="/collaborate.html">Collaborate</a>
-        </div>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/live.html">Live</a>
+        <a href="/blog.html">Blog</a>
+        <a class="active" href="/about.html">About</a>
+        <a href="/collaborate.html">Collaborate</a>
       </div>
-    </nav>
+    </div>
+  </nav>
 
-    <div class="container">
-      <section class="card">
-        <div class="section-header">
-          <span class="status-dot"></span>
-          <h2>About GingerPot</h2>
-        </div>
+  <div class="container">
+    <section class="card">
+      <div class="section-header">
+        <span class="status-dot"></span>
+        <h2>About GingerPot</h2>
+      </div>
 
-        <p>
-          GingerPot is a security monitoring project built around an
-          internet-facing T-Pot honeypot.
-        </p>
+      <p>
+        GingerPot is a security monitoring project built around an
+        internet-facing T-Pot honeypot.
+      </p>
 
-        <p>
-          It collects real-world security telemetry, analyzes suspicious
-          activity, and transforms raw security events into practical
-          observations about observed security behavior, detection engineering,
-          and security operations.
-        </p>
-      </section>
+      <p>
+        It collects real-world security telemetry, analyzes suspicious
+        activity, and transforms raw security events into practical
+        observations about observed security behavior, detection engineering,
+        and security operations.
+      </p>
+    </section>
 
-      <section class="card">
-        <div class="section-header">
-          <span class="status-dot"></span>
-          <h2>Architecture</h2>
-        </div>
+    <section class="card">
+      <div class="section-header">
+        <span class="status-dot"></span>
+        <h2>Architecture</h2>
+      </div>
 
-        <p>
-          GingerPot separates data collection from public visualization.
-          Sensitive Elasticsearch data remains private while summarized
-          telemetry is published through a lightweight reporting pipeline.
-        </p>
+      <p>
+        GingerPot separates data collection from public visualization.
+        Sensitive Elasticsearch data remains private while summarized
+        telemetry is published through a lightweight reporting pipeline.
+      </p>
 
-        <pre class="architecture">
+      <pre class="architecture">
   Internet Activity
           |
           v
@@ -88,77 +86,95 @@
           v
  Public Dashboard
         </pre>
-      </section>
+    </section>
 
-      <section class="card">
-        <div class="section-header">
-          <span class="status-dot"></span>
-          <h2>Objectives</h2>
-        </div>
-
-        <ul>
-          <li>Practice security monitoring and incident investigation</li>
-          <li>Analyze observed security activity using real telemetry</li>
-          <li>Develop detection engineering workflows</li>
-          <li>Build security automation tools</li>
-          <li>Explore practical SIEM operations</li>
-        </ul>
-      </section>
-
-      <section class="card">
-        <div class="section-header">
-          <span class="status-dot"></span>
-          <h2>Technologies & Focus</h2>
-        </div>
-
-        <div class="tags">
-          <span>T-Pot</span>
-          <span>Elasticsearch</span>
-          <span>Kibana</span>
-          <span>Suricata</span>
-          <span>Python</span>
-          <span>DigitalOcean</span>
-          <span>Detection Engineering</span>
-          <span>SIEM</span>
-        </div>
-      </section>
-
-      <section class="card">
-        <div class="section-header">
-          <span class="status-dot"></span>
-          <h2>About the Name</h2>
-        </div>
-
-        <p>
-          The name GingerPot comes from a simple personal connection: honey and
-          ginger are ingredients I enjoy together. The honeypot provides the raw
-          ingredients of security telemetry — scans, probes, and suspicious
-          activity — while investigation and analysis transform them into
-          meaningful insights.
-        </p>
-
-        <p>
-          The project's visual identity is inspired by traditional blue
-          gingerpot artwork. The blue color also carries a subtle connection to
-          the Blue Team mindset: observing, investigating, and improving
-          security through visibility.
-        </p>
-      </section>
-    </div>
-
-    <footer class="footer">
-      <div class="footer-links">
-        <a href="/about.html">About</a>
-        <a href="/collaborate.html">Collaborate</a>
-        <a
-          href="https://github.com/damixen/damixen.github.io"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          GitHub
-        </a>
+    <section class="card">
+      <div class="section-header">
+        <span class="status-dot"></span>
+        <h2>Objectives</h2>
       </div>
-      <p class="footer-version">GingerPot 2026.08.6</p>
-    </footer>
-  </body>
+
+      <ul>
+        <li>Practice security monitoring and incident investigation</li>
+        <li>Analyze observed security activity using real telemetry</li>
+        <li>Develop detection engineering workflows</li>
+        <li>Build security automation tools</li>
+        <li>Explore practical SIEM operations</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <span class="status-dot"></span>
+        <h2>Technologies & Focus</h2>
+      </div>
+
+      <div class="tags">
+        <span>T-Pot</span>
+        <span>Elasticsearch</span>
+        <span>Kibana</span>
+        <span>Suricata</span>
+        <span>Python</span>
+        <span>DigitalOcean</span>
+        <span>Detection Engineering</span>
+        <span>SIEM</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <span class="status-dot"></span>
+        <h2>Acknowledgement</h2>
+      </div>
+
+      <p>
+        GingerPot uses
+        <a href="https://github.com/telekom-security/tpotce" target="_blank" rel="noopener noreferrer">
+          T-Pot
+        </a>
+        by Deutsche Telekom Security as its honeypot platform.
+      </p>
+
+      <p>
+        T-Pot provides the underlying honeypot environment and telemetry
+        collection infrastructure, while GingerPot processes and presents
+        the resulting data through its monitoring dashboard.
+      </p>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <span class="status-dot"></span>
+        <h2>About the Name</h2>
+      </div>
+
+      <p>
+        The name GingerPot comes from a simple personal connection: honey and
+        ginger are ingredients I enjoy together. The honeypot provides the raw
+        ingredients of security telemetry — scans, probes, and suspicious
+        activity — while investigation and analysis transform them into
+        meaningful insights.
+      </p>
+
+      <p>
+        The project's visual identity is inspired by traditional blue
+        gingerpot artwork. The blue color also carries a subtle connection to
+        the Blue Team mindset: observing, investigating, and improving
+        security through visibility.
+      </p>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="/about.html">About</a>
+      <a href="/collaborate.html">Collaborate</a>
+      <a href="https://github.com/damixen/damixen.github.io" target="_blank" rel="noopener noreferrer">
+        GitHub
+      </a>
+    </div>
+    <p class="footer-version">GingerPot 2026.08.6</p>
+  </footer>
+</body>
+
 </html>

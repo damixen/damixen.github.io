@@ -265,8 +265,51 @@ function updateHoneypots(
     const honeypot =
       document.createElement("td");
 
-    honeypot.textContent =
+    const honeypotName =
+      document.createElement("span");
+
+    honeypotName.textContent =
       item.type || "Unknown";
+
+    honeypot.appendChild(
+      honeypotName,
+    );
+
+    const infoButton =
+      document.createElement("button");
+
+    infoButton.className =
+      "info-button";
+
+    infoButton.type = "button";
+
+    infoButton.textContent = "i";
+
+    infoButton.setAttribute(
+      "aria-label",
+      `Information about ${item.type || "honeypot"}`,
+    );
+
+    infoButton.dataset.infoKey =
+      `honeypots.${item.type}`;
+
+    const honeypotInfo =
+      document.createElement("span");
+
+    honeypotInfo.className =
+      "honeypot-name-info";
+
+    honeypotInfo.appendChild(
+      honeypotName,
+    );
+
+    honeypotInfo.appendChild(
+      infoButton,
+    );
+
+    honeypot.appendChild(
+      honeypotInfo,
+    );
 
     const count =
       document.createElement("td");
@@ -517,6 +560,8 @@ function renderCowrieDetails(
     details.event_types,
     "value",
     "count",
+    null,
+    "metrics.cowrie.eventTypes",
   );
 
   addDetailList(
@@ -525,6 +570,8 @@ function renderCowrieDetails(
     details.commands,
     "value",
     "count",
+    null,
+    "metrics.cowrie.commands",
   );
 
   addDetailList(
@@ -533,6 +580,8 @@ function renderCowrieDetails(
     details.downloads,
     "value",
     "count",
+    null,
+    "metrics.cowrie.downloads",
   );
 
   addDetailList(
@@ -541,6 +590,8 @@ function renderCowrieDetails(
     details.files,
     "value",
     "count",
+    null,
+    "metrics.cowrie.files",
   );
 
   addDetailList(
@@ -549,6 +600,8 @@ function renderCowrieDetails(
     details.ssh_client_fingerprints,
     "value",
     "count",
+    null,
+    "metrics.cowrie.sshClientFingerprints",
   );
 
   addDetailList(
@@ -557,6 +610,8 @@ function renderCowrieDetails(
     details.credentials,
     "username",
     "count",
+    null,
+    "metrics.cowrie.credentials",
   );
 }
 
@@ -586,6 +641,8 @@ function renderDionaeaDetails(
     details.protocol,
     "value",
     "count",
+    null,
+    "metrics.dionaea.protocols"
   );
 
   addDetailList(
@@ -594,6 +651,8 @@ function renderDionaeaDetails(
     details.credentials,
     "username",
     "count",
+    null,
+    "metrics.dionaea.credentials"
   );
 }
 
@@ -623,6 +682,8 @@ function renderSentrypeerDetails(
     details.sip_method,
     "value",
     "count",
+    null,
+    "metrics.sentrypeer.sipMethods"
   );
 
   addDetailList(
@@ -631,6 +692,8 @@ function renderSentrypeerDetails(
     details.sip_user_agent,
     "value",
     "count",
+    null,
+    "metrics.sentrypeer.sipUserAgents"
   );
 
   renderSourceNumbers(
@@ -682,7 +745,27 @@ function renderSourceNumbers(container, values) {
   viewButton.textContent =
     "View";
 
-  header.appendChild(labelElement);
+
+  const labelGroup =
+    document.createElement("span");
+
+  labelGroup.className =
+    "honeypot-detail-label";
+
+  labelGroup.appendChild(
+    labelElement,
+  );
+
+  addInfoButton(
+    labelGroup,
+    "Source Activity",
+    "metrics.sentrypeer.sourceActivity",
+  );
+
+  header.appendChild(
+    labelGroup,
+  );
+
   header.appendChild(viewButton);
 
   const content =
@@ -786,9 +869,6 @@ function renderSourceNumbers(container, values) {
 
   note.className =
     "status-note";
-
-  note.textContent =
-    "Some events do not contain a called-number value, and values may not represent normalized telephone numbers.";
 
   container.appendChild(note);
 }
@@ -1597,6 +1677,7 @@ function addDetailList(
   keyField,
   countField,
   formatter,
+  infoKey,
 ) {
   if (
     !Array.isArray(values) ||
@@ -1612,34 +1693,57 @@ function addDetailList(
     "honeypot-detail-item";
 
   const header =
-    document.createElement("button");
+    document.createElement("div");
 
   header.className =
     "honeypot-detail-toggle";
-
-  header.type = "button";
 
   header.setAttribute(
     "aria-expanded",
     "false",
   );
 
+  const labelGroup =
+    document.createElement("span");
+
+  labelGroup.className =
+    "honeypot-detail-label";
+
   const labelElement =
     document.createElement("span");
 
-  labelElement.textContent = label;
+  labelElement.textContent =
+    label;
+
+  labelGroup.appendChild(
+    labelElement,
+  );
+
+  header.appendChild(
+    labelGroup,
+  );
+
+  addInfoButton(
+    labelGroup,
+    label,
+    infoKey,
+  );
 
   const viewButton =
-    document.createElement("span");
+    document.createElement("button");
 
   viewButton.className =
     "honeypot-detail-view-button";
 
+  viewButton.type =
+    "button";
+
   viewButton.textContent =
     "View";
 
-  header.appendChild(labelElement);
-  header.appendChild(viewButton);
+  header.appendChild(
+    viewButton,
+  );
 
   const content =
     document.createElement("div");
@@ -1654,8 +1758,6 @@ function addDetailList(
 
   table.className =
     "dashboard-table honeypot-detail-table";
-
-  table.id = "honeypots-table-container";
 
   values.slice(0, 10).forEach(
     (entry) => {
@@ -1687,16 +1789,25 @@ function addDetailList(
           ? entry[countField].toLocaleString()
           : "—";
 
-      row.appendChild(valueCell);
-      row.appendChild(countCell);
+      row.appendChild(
+        valueCell,
+      );
 
-      table.appendChild(row);
+      row.appendChild(
+        countCell,
+      );
+
+      table.appendChild(
+        row,
+      );
     },
   );
 
-  content.appendChild(table);
+  content.appendChild(
+    table,
+  );
 
-  header.addEventListener(
+  viewButton.addEventListener(
     "click",
     () => {
       const expanded =
@@ -1709,10 +1820,13 @@ function addDetailList(
         String(!expanded),
       );
 
-      content.hidden = expanded;
+      content.hidden =
+        expanded;
 
       viewButton.textContent =
-        expanded ? "View" : "Hide";
+        expanded
+          ? "View"
+          : "Hide";
 
       viewButton.classList.toggle(
         "is-expanded",
@@ -1721,10 +1835,17 @@ function addDetailList(
     },
   );
 
-  item.appendChild(header);
-  item.appendChild(content);
+  item.appendChild(
+    header,
+  );
 
-  container.appendChild(item);
+  item.appendChild(
+    content,
+  );
+
+  container.appendChild(
+    item,
+  );
 }
 
 function addASNList(container, label, values) {
@@ -1869,3 +1990,219 @@ function addASNList(container, label, values) {
 
   container.appendChild(item);
 }
+
+function addInfoButton(
+  container,
+  label,
+  infoKey,
+) {
+  if (!infoKey) {
+    return;
+  }
+
+  const infoButton =
+    document.createElement("button");
+
+  infoButton.className =
+    "info-button";
+
+  infoButton.type =
+    "button";
+
+  infoButton.textContent =
+    "i";
+
+  infoButton.setAttribute(
+    "aria-label",
+    `Information about ${label}`,
+  );
+
+  infoButton.dataset.infoKey =
+    infoKey;
+
+  container.appendChild(
+    infoButton,
+  );
+}
+
+function initInfoButtons() {
+  const dialog =
+    document.getElementById(
+      "info-dialog",
+    );
+
+  const closeButton =
+    document.getElementById(
+      "info-dialog-close",
+    );
+
+  const title =
+    document.getElementById(
+      "info-dialog-title",
+    );
+
+  const what =
+    document.getElementById(
+      "info-dialog-what",
+    );
+
+  const why =
+    document.getElementById(
+      "info-dialog-why",
+    );
+
+  const note =
+    document.getElementById(
+      "info-dialog-note",
+    );
+
+  const whatSection =
+    document.getElementById(
+      "info-dialog-what-section",
+    );
+
+  const whySection =
+    document.getElementById(
+      "info-dialog-why-section",
+    );
+
+  const noteSection =
+    document.getElementById(
+      "info-dialog-note-section",
+    );
+
+  const links =
+    document.getElementById(
+      "info-dialog-links",
+    );
+
+  let lastInfoButton = null;
+
+  document.addEventListener(
+    "click",
+    (event) => {
+      const button =
+        event.target.closest(
+          ".info-button",
+        );
+
+      if (!button) {
+        return;
+      }
+
+      const info =
+        getInfoContent(
+          button.dataset.infoKey,
+        );
+
+      if (!info) {
+        return;
+      }
+
+      lastInfoButton = button;
+
+      title.textContent =
+        info.title || "";
+
+      what.textContent =
+        info.what || "";
+
+      why.textContent =
+        info.why || "";
+
+      note.textContent =
+        info.note || "";
+
+      whatSection.hidden =
+        !info.what;
+
+      whySection.hidden =
+        !info.why;
+
+      noteSection.hidden =
+        !info.note;
+
+      links.innerHTML = "";
+
+      if (info.github) {
+        const link =
+          document.createElement(
+            "a",
+          );
+
+        link.href =
+          info.github;
+
+        link.textContent =
+          "GitHub";
+
+        link.target =
+          "_blank";
+
+        link.rel =
+          "noopener noreferrer";
+
+        links.appendChild(
+          link,
+        );
+      }
+
+      dialog.hidden = false;
+
+      document.body.style.overflow =
+        "hidden";
+
+      closeButton.focus();
+    },
+  );
+
+  closeButton.addEventListener(
+    "click",
+    closeInfoDialog,
+  );
+
+  dialog.addEventListener(
+    "click",
+    (event) => {
+      if (
+        event.target ===
+        dialog
+      ) {
+        closeInfoDialog();
+      }
+    },
+  );
+
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.key === "Escape" &&
+        !dialog.hidden
+      ) {
+        closeInfoDialog();
+      }
+    },
+  );
+
+  function getInfoContent(
+    key,
+  ) {
+    return key.split(".").reduce(
+      (value, part) =>
+        value?.[part],
+      INFO_CONTENT,
+    );
+  }
+
+  function closeInfoDialog() {
+    dialog.hidden = true;
+
+    document.body.style.overflow =
+      "";
+
+    lastInfoButton?.focus();
+  }
+}
+
+initInfoButtons();

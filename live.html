@@ -200,6 +200,11 @@
         <span class="status-dot"></span>
 
         <h2>Top AS Organizations</h2>
+
+        <button type="button" class="info-button" aria-label="Information about Top AS Organizations"
+          data-info-key="topASOrganizations">
+          i
+        </button>
       </div>
 
       <div class="as-table-container">
@@ -250,7 +255,37 @@
     <p class="footer-version">GingerPot 2026.08.6</p>
   </footer>
 
+  <div id="info-dialog" class="info-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="info-dialog-title">
+    <div class="info-dialog-content">
+      <button type="button" id="info-dialog-close" class="info-dialog-close" aria-label="Close information">
+        ×
+      </button>
+
+      <h2 id="info-dialog-title"></h2>
+
+      <div id="info-dialog-what-section">
+        <h3>Description</h3>
+        <p id="info-dialog-what"></p>
+      </div>
+
+      <div id="info-dialog-why-section">
+        <h3>Why It's Important</h3>
+        <p id="info-dialog-why"></p>
+      </div>
+
+      <div id="info-dialog-note-section">
+        <h3>Note</h3>
+        <p id="info-dialog-note"></p>
+      </div>
+
+      <div id="info-dialog-links"></div>
+
+      <div id="info-dialog-links"></div>
+    </div>
+  </div>
+
   <script src="js/live.js"></script>
+  <script src="assets/info.js"></script>
 </body>
 
 </html>
