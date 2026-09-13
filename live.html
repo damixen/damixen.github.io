@@ -101,7 +101,7 @@
           Last update: --
         </span>
 
-        <span id="data-update-status"> • Data updated hourly </span>
+        <span> • Data updated hourly </span>
 
         <button id="toggle-controls" class="toolbar-toggle">
           Hide Controls
@@ -200,11 +200,6 @@
         <span class="status-dot"></span>
 
         <h2>Top AS Organizations</h2>
-
-        <button type="button" class="info-button" aria-label="Information about Top AS Organizations"
-          data-info-key="topASOrganizations">
-          i
-        </button>
       </div>
 
       <div class="as-table-container">
@@ -224,6 +219,7 @@
     <section class="card">
       <div class="section-header">
         <span class="status-dot"></span>
+
         <h2>Honeypot Activity</h2>
       </div>
 
@@ -232,13 +228,17 @@
           <tr>
             <th>Honeypot</th>
             <th>Events</th>
-            <th>Details</th>
           </tr>
 
           <tbody id="honeypots-table"></tbody>
         </table>
       </div>
     </section>
+
+    <!-- Individual honeypot details -->
+    <div id="honeypot-details"></div>
+
+    <div id="honeypot-coming-soon"></div>
   </div>
 
   <footer class="footer">
@@ -252,7 +252,7 @@
       </a>
     </div>
 
-    <p class="footer-version">GingerPot 2026.08.7</p>
+    <p class="footer-version">GingerPot 2026.08.6</p>
   </footer>
 
   <div id="info-dialog" class="info-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="info-dialog-title">
@@ -280,12 +280,13 @@
 
       <div id="info-dialog-links"></div>
 
-      <div id="info-dialog-links"></div>
     </div>
   </div>
 
-  <script src="js/live.js"></script>
+
+  <script src="js/live2.js"></script>
   <script src="assets/info.js"></script>
+
 </body>
 
 </html>

@@ -133,7 +133,6 @@ async function loadFeed() {
       telemetry.sentrypeer,
     );
 
-
     const asList = Array.isArray(telemetry.as)
       ? telemetry.as
       : [];
@@ -143,7 +142,6 @@ async function loadFeed() {
     updateSparkline(telemetry.sparkline);
 
     updateModeLabels(mode, date);
-
 
     setFeedStatus("Telemetry loaded successfully.");
   } catch (error) {
@@ -240,7 +238,15 @@ function updateHoneypots(
   const table =
     document.getElementById("honeypots-table");
 
+  const detailsContainer =
+    document.getElementById("honeypot-details");
+
+  const comingSoonContainer =
+    document.getElementById("honeypot-coming-soon");
+
   table.innerHTML = "";
+  detailsContainer.innerHTML = "";
+  comingSoonContainer.innerHTML = "";
 
   if (!Array.isArray(honeypotTypes)) {
     return;
@@ -252,17 +258,249 @@ function updateHoneypots(
     Sentrypeer: sentrypeer,
   };
 
-  const hasHpDetails = cowrie || dionaea || sentrypeer
+  const comingSoon = [];
 
+  /*
+   * Summary table
+   */
   honeypotTypes.forEach((item) => {
-    const row = document.createElement("tr");
+    const type = item.type || "Unknown";
 
-    row.setAttribute(
-      "aria-expanded",
-      "false",
-    );
+    const row =
+      document.createElement("tr");
 
     const honeypot =
+      document.createElement("td");
+
+    honeypot.textContent = type;
+
+    const count =
+      document.createElement("td");
+
+    count.textContent =
+      typeof item.count === "number"
+        ? item.count.toLocaleString()
+        : "—";
+
+    row.appendChild(honeypot);
+    row.appendChild(count);
+
+    table.appendChild(row);
+
+    /*
+     * Separate honeypots with
+     * available details from those
+     * still coming soon.
+     */
+    if (detailsByType[type]) {
+      createHoneypotDetailCard(
+        detailsContainer,
+        type,
+        detailsByType[type],
+      );
+    } else {
+      comingSoon.push(item);
+    }
+  });
+
+  /*
+   * Coming soon section
+   */
+  if (comingSoon.length > 0) {
+    createComingSoonSection(
+      comingSoonContainer,
+      comingSoon,
+    );
+  }
+}
+
+function createHoneypotDetailCard(
+  container,
+  type,
+  details,
+) {
+  const card =
+    document.createElement("section");
+
+  card.className =
+    "card honeypot-detail-card";
+
+  /*
+   * Header is a div rather than a button
+   * so the info button can exist beside
+   * the honeypot name without nesting
+   * one button inside another.
+   */
+  const header =
+    document.createElement("div");
+
+  header.className =
+    "honeypot-detail-toggle";
+
+  header.setAttribute(
+    "aria-expanded",
+    "true",
+  );
+
+  const labelGroup =
+    document.createElement("span");
+
+  labelGroup.className =
+    "honeypot-detail-label";
+
+  const label =
+    document.createElement("span");
+
+  label.textContent = type;
+
+  labelGroup.appendChild(label);
+
+  addInfoButton(
+    labelGroup,
+    type,
+    `honeypots.${type}`,
+  );
+
+  const controls =
+    document.createElement("span");
+
+  controls.className =
+    "honeypot-detail-controls";
+
+  const viewButton =
+    document.createElement("button");
+
+  viewButton.className =
+    "honeypot-detail-view-button";
+
+  viewButton.type = "button";
+
+  viewButton.textContent =
+    "Hide";
+
+  viewButton.classList.add(
+    "is-expanded",
+  );
+
+  controls.appendChild(viewButton);
+
+  header.appendChild(labelGroup);
+  header.appendChild(controls);
+
+  const content =
+    document.createElement("div");
+
+  content.className =
+    "honeypot-detail-content";
+
+  content.hidden = false;
+
+  renderHoneypotDetail(
+    content,
+    type,
+    details,
+  );
+
+  viewButton.addEventListener(
+    "click",
+    () => {
+      const expanded =
+        header.getAttribute(
+          "aria-expanded",
+        ) === "true";
+
+      header.setAttribute(
+        "aria-expanded",
+        String(!expanded),
+      );
+
+      content.hidden = expanded;
+
+      viewButton.textContent =
+        expanded
+          ? "View"
+          : "Hide";
+
+      viewButton.classList.toggle(
+        "is-expanded",
+        !expanded,
+      );
+    },
+  );
+
+  card.appendChild(header);
+  card.appendChild(content);
+
+  container.appendChild(card);
+}
+
+function createComingSoonSection(
+  container,
+  honeypots,
+) {
+  const card =
+    document.createElement("section");
+
+  card.className =
+    "card honeypot-coming-soon-card";
+
+  const header =
+    document.createElement("div");
+
+  header.className =
+    "section-header";
+
+  const dot =
+    document.createElement("span");
+
+  dot.className =
+    "status-dot";
+
+  const title =
+    document.createElement("h2");
+
+  title.textContent =
+    "More Honeypots";
+
+  header.appendChild(dot);
+  header.appendChild(title);
+
+  const table =
+    document.createElement("table");
+
+  table.className =
+    "dashboard-table";
+
+  const headerRow =
+    document.createElement("tr");
+
+  const honeypotHeader =
+    document.createElement("th");
+
+  honeypotHeader.textContent =
+    "Honeypot";
+
+  const statusHeader =
+    document.createElement("th");
+
+  statusHeader.textContent =
+    "Details";
+
+  headerRow.appendChild(
+    honeypotHeader,
+  );
+
+  headerRow.appendChild(
+    statusHeader,
+  );
+
+  table.appendChild(headerRow);
+
+  honeypots.forEach((item) => {
+    const row =
+      document.createElement("tr");
+
+    const name =
       document.createElement("td");
 
     const honeypotName =
@@ -270,10 +508,6 @@ function updateHoneypots(
 
     honeypotName.textContent =
       item.type || "Unknown";
-
-    honeypot.appendChild(
-      honeypotName,
-    );
 
     const infoButton =
       document.createElement("button");
@@ -307,125 +541,26 @@ function updateHoneypots(
       infoButton,
     );
 
-    honeypot.appendChild(
+    name.appendChild(
       honeypotInfo,
     );
 
-    const count =
+    const status =
       document.createElement("td");
 
-    count.textContent =
-      typeof item.count === "number"
-        ? item.count.toLocaleString()
-        : "—";
+    status.textContent =
+      "Coming soon";
 
-    const details =
-      document.createElement("td");
+    row.appendChild(name);
+    row.appendChild(status);
 
-    details.className =
-      "honeypot-details-cell";
-
-    const honeypotDetails =
-      detailsByType[item.type];
-
-    row.appendChild(honeypot);
-    row.appendChild(count);
-    row.appendChild(details);
-
-    if (honeypotDetails) {
-      const viewButton =
-        document.createElement("button");
-
-      viewButton.className =
-        "as-view-button";
-
-      viewButton.type = "button";
-
-      viewButton.textContent =
-        "View";
-
-      viewButton.setAttribute(
-        "aria-label",
-        `View details for ${item.type || "honeypot"}`,
-      );
-
-      details.appendChild(viewButton);
-
-      const detailRow =
-        document.createElement("tr");
-
-      detailRow.className =
-        "honeypot-detail-row";
-
-      detailRow.hidden = true;
-
-      const detailCell =
-        document.createElement("td");
-
-      detailCell.colSpan = 3;
-
-      renderHoneypotDetail(
-        detailCell,
-        item.type,
-        honeypotDetails,
-      );
-
-      detailRow.appendChild(detailCell);
-
-      const toggleRow = () => {
-        const expanded =
-          row.getAttribute("aria-expanded") ===
-          "true";
-
-        row.setAttribute(
-          "aria-expanded",
-          String(!expanded),
-        );
-
-        detailRow.hidden = expanded;
-
-        viewButton.textContent =
-          expanded
-            ? "View"
-            : "Hide";
-
-        viewButton.classList.toggle(
-          "is-expanded",
-          !expanded,
-        );
-
-        viewButton.setAttribute(
-          "aria-label",
-          expanded
-            ? `View details for ${item.type || "honeypot"}`
-            : `Hide details for ${item.type || "honeypot"}`,
-        );
-      };
-
-      viewButton.addEventListener(
-        "click",
-        (event) => {
-          event.stopPropagation();
-
-          toggleRow();
-        },
-      );
-
-      table.appendChild(row);
-      table.appendChild(detailRow);
-    } else {
-      if (hasHpDetails) {
-        details.textContent = "Coming soon";
-      }
-      else {
-        details.textContent = "-";
-      }
-
-
-
-      table.appendChild(row);
-    }
+    table.appendChild(row);
   });
+
+  card.appendChild(header);
+  card.appendChild(table);
+
+  container.appendChild(card);
 }
 
 function renderHoneypotDetail(
@@ -438,6 +573,7 @@ function renderHoneypotDetail(
       container,
       details,
     );
+
     return;
   }
 
@@ -446,6 +582,7 @@ function renderHoneypotDetail(
       container,
       details,
     );
+
     return;
   }
 
@@ -471,7 +608,6 @@ function createDetailSection(
 
   return section;
 }
-
 
 function renderCommonHoneypotDetails(
   container,
@@ -525,7 +661,6 @@ function renderCommonHoneypotDetails(
   container.appendChild(section);
 }
 
-
 function formatPortEntry(item) {
   if (!item || item.port === undefined) {
     return "Unknown";
@@ -533,7 +668,6 @@ function formatPortEntry(item) {
 
   return formatPort(item.port);
 }
-
 
 function renderCowrieDetails(
   container,
@@ -615,7 +749,6 @@ function renderCowrieDetails(
   );
 }
 
-
 function renderDionaeaDetails(
   container,
   details,
@@ -642,7 +775,7 @@ function renderDionaeaDetails(
     "value",
     "count",
     null,
-    "metrics.dionaea.protocols"
+    "metrics.dionaea.protocols",
   );
 
   addDetailList(
@@ -652,10 +785,9 @@ function renderDionaeaDetails(
     "username",
     "count",
     null,
-    "metrics.dionaea.credentials"
+    "metrics.dionaea.credentials",
   );
 }
-
 
 function renderSentrypeerDetails(
   container,
@@ -683,7 +815,7 @@ function renderSentrypeerDetails(
     "value",
     "count",
     null,
-    "metrics.sentrypeer.sipMethods"
+    "metrics.sentrypeer.sipMethods",
   );
 
   addDetailList(
@@ -693,7 +825,7 @@ function renderSentrypeerDetails(
     "value",
     "count",
     null,
-    "metrics.sentrypeer.sipUserAgents"
+    "metrics.sentrypeer.sipUserAgents",
   );
 
   renderSourceNumbers(
@@ -702,8 +834,10 @@ function renderSentrypeerDetails(
   );
 }
 
-
-function renderSourceNumbers(container, values) {
+function renderSourceNumbers(
+  container,
+  values,
+) {
   if (
     !Array.isArray(values) ||
     values.length === 0
@@ -717,40 +851,33 @@ function renderSourceNumbers(container, values) {
   item.className =
     "honeypot-detail-item";
 
+  /*
+   * Use a div for the header so the
+   * info button and View button are
+   * not nested inside another button.
+   */
   const header =
-    document.createElement("button");
+    document.createElement("div");
 
   header.className =
     "honeypot-detail-toggle";
 
-  header.type = "button";
-
   header.setAttribute(
     "aria-expanded",
-    "false",
+    "true",
   );
-
-  const labelElement =
-    document.createElement("span");
-
-  labelElement.textContent =
-    "Source Activity";
-
-  const viewButton =
-    document.createElement("span");
-
-  viewButton.className =
-    "honeypot-detail-view-button";
-
-  viewButton.textContent =
-    "View";
-
 
   const labelGroup =
     document.createElement("span");
 
   labelGroup.className =
     "honeypot-detail-label";
+
+  const labelElement =
+    document.createElement("span");
+
+  labelElement.textContent =
+    "Source Activity";
 
   labelGroup.appendChild(
     labelElement,
@@ -762,11 +889,31 @@ function renderSourceNumbers(container, values) {
     "metrics.sentrypeer.sourceActivity",
   );
 
-  header.appendChild(
-    labelGroup,
+  const controls =
+    document.createElement("span");
+
+  controls.className =
+    "honeypot-detail-controls";
+
+  const viewButton =
+    document.createElement("button");
+
+  viewButton.className =
+    "honeypot-detail-view-button";
+
+  viewButton.type = "button";
+
+  viewButton.textContent =
+    "Hide";
+
+  viewButton.classList.add(
+    "is-expanded",
   );
 
-  header.appendChild(viewButton);
+  controls.appendChild(viewButton);
+
+  header.appendChild(labelGroup);
+  header.appendChild(controls);
 
   const content =
     document.createElement("div");
@@ -774,7 +921,7 @@ function renderSourceNumbers(container, values) {
   content.className =
     "honeypot-detail-content";
 
-  content.hidden = true;
+  content.hidden = false;
 
   const table =
     document.createElement("table");
@@ -786,7 +933,11 @@ function renderSourceNumbers(container, values) {
   const headerRow =
     document.createElement("tr");
 
-  ["Source IP", "Activity", "Unique Call #"].forEach(
+  [
+    "Source IP",
+    "Activity",
+    "Unique Call #",
+  ].forEach(
     (text) => {
       const th =
         document.createElement("th");
@@ -834,7 +985,7 @@ function renderSourceNumbers(container, values) {
 
   content.appendChild(table);
 
-  header.addEventListener(
+  viewButton.addEventListener(
     "click",
     () => {
       const expanded =
@@ -850,7 +1001,9 @@ function renderSourceNumbers(container, values) {
       content.hidden = expanded;
 
       viewButton.textContent =
-        expanded ? "View" : "Hide";
+        expanded
+          ? "View"
+          : "Hide";
 
       viewButton.classList.toggle(
         "is-expanded",
@@ -873,39 +1026,85 @@ function renderSourceNumbers(container, values) {
   container.appendChild(note);
 }
 
-
-
 function updateAS(asList) {
-  const table = document.getElementById("as-table");
+  const table =
+    document.getElementById("as-table");
 
   table.innerHTML = "";
 
+  /*
+   * Restore the main Top ASN info button.
+   *
+   * The heading is found from the table's
+   * surrounding card, so this does not require
+   * a specific heading ID in the HTML.
+   */
+  const asCard =
+    table.closest(".card");
+
+  if (asCard) {
+    const asHeading =
+      asCard.querySelector(
+        "h2, h3",
+      );
+
+    if (
+      asHeading &&
+      !asHeading.querySelector(
+        ".info-button",
+      )
+    ) {
+      addInfoButton(
+        asHeading,
+        "Top ASNs",
+        "topASOrganizations",
+      );
+    }
+  }
+
   asList.slice(0, 5).forEach((item) => {
-    const row = document.createElement("tr");
+    const row =
+      document.createElement("tr");
 
-    const organization = document.createElement("td");
-    organization.textContent = item.as_org || "Unknown";
+    const organization =
+      document.createElement("td");
 
-    const asn = document.createElement("td");
+    organization.textContent =
+      item.as_org || "Unknown";
+
+    const asn =
+      document.createElement("td");
+
     asn.textContent = item.asn
       ? `AS${item.asn}`
       : "Unknown";
 
-    const events = document.createElement("td");
-    events.textContent = item.events.toLocaleString();
+    const events =
+      document.createElement("td");
 
-    const countries = document.createElement("td");
+    events.textContent =
+      item.events.toLocaleString();
+
+    const countries =
+      document.createElement("td");
 
     row.appendChild(organization);
     row.appendChild(asn);
     row.appendChild(events);
     row.appendChild(countries);
 
-    if (item.countries && item.countries.length > 0) {
-      const viewButton = document.createElement("button");
+    if (
+      item.countries &&
+      item.countries.length > 0
+    ) {
+      const viewButton =
+        document.createElement("button");
 
-      viewButton.className = "as-view-button";
+      viewButton.className =
+        "as-view-button";
+
       viewButton.type = "button";
+
       viewButton.textContent =
         `View (${item.countries.length})`;
 
@@ -917,12 +1116,16 @@ function updateAS(asList) {
 
       countries.appendChild(viewButton);
 
-      const detailRow = document.createElement("tr");
+      const detailRow =
+        document.createElement("tr");
 
-      detailRow.className = "as-detail-row";
+      detailRow.className =
+        "as-detail-row";
+
       detailRow.hidden = true;
 
-      const detailCell = document.createElement("td");
+      const detailCell =
+        document.createElement("td");
 
       detailCell.colSpan = 4;
 
@@ -932,32 +1135,50 @@ function updateAS(asList) {
       countryTable.className =
         "dashboard-table as-country-table";
 
-      item.countries.forEach((country) => {
-        const countryRow = document.createElement("tr");
+      item.countries.forEach(
+        (country) => {
+          const countryRow =
+            document.createElement("tr");
 
-        const countryName =
-          document.createElement("td");
+          const countryName =
+            document.createElement("td");
 
-        countryName.textContent = country.country;
+          countryName.textContent =
+            country.country;
 
-        const countryEvents =
-          document.createElement("td");
+          const countryEvents =
+            document.createElement("td");
 
-        countryEvents.textContent =
-          country.events.toLocaleString();
+          countryEvents.textContent =
+            country.events.toLocaleString();
 
-        countryRow.appendChild(countryName);
-        countryRow.appendChild(countryEvents);
+          countryRow.appendChild(
+            countryName,
+          );
 
-        countryTable.appendChild(countryRow);
-      });
+          countryRow.appendChild(
+            countryEvents,
+          );
 
-      detailCell.appendChild(countryTable);
-      detailRow.appendChild(detailCell);
+          countryTable.appendChild(
+            countryRow,
+          );
+        },
+      );
+
+      detailCell.appendChild(
+        countryTable,
+      );
+
+      detailRow.appendChild(
+        detailCell,
+      );
 
       const toggleRow = () => {
         const expanded =
-          row.getAttribute("aria-expanded") === "true";
+          row.getAttribute(
+            "aria-expanded",
+          ) === "true";
 
         row.setAttribute(
           "aria-expanded",
@@ -966,15 +1187,15 @@ function updateAS(asList) {
 
         detailRow.hidden = expanded;
 
-        viewButton.textContent = expanded
-          ? `View (${item.countries.length})`
-          : `Hide (${item.countries.length})`;
+        viewButton.textContent =
+          expanded
+            ? `View (${item.countries.length})`
+            : `Hide (${item.countries.length})`;
 
         viewButton.classList.toggle(
           "is-expanded",
           !expanded,
         );
-
 
         viewButton.setAttribute(
           "aria-label",
@@ -1010,51 +1231,53 @@ function updateDateState() {
     'input[name="mode"]:checked',
   ).value;
 
-  const date = document.getElementById("date");
-  const weekRange = document.getElementById("week-range");
+  const date =
+    document.getElementById("date");
+
+  const weekRange =
+    document.getElementById("week-range");
 
   date.disabled =
-    mode !== "daily" && mode !== "weekly";
-
-  const dataUpdateStatus =
-    document.getElementById("data-update-status");
+    mode !== "daily" &&
+    mode !== "weekly";
 
   if (mode === "weekly") {
-    dataUpdateStatus.textContent =
-      "• Data updated through last Sunday";
-
-    date.max = formatDateInputValue(
-      getLastCompletedWeekEnd(),
-    );
+    date.max =
+      formatDateInputValue(
+        getLastCompletedWeekEnd(),
+      );
 
     if (date.value) {
-      const selectedDate = new Date(
-        `${date.value}T00:00:00`,
-      );
+      const selectedDate =
+        new Date(
+          `${date.value}T00:00:00`,
+        );
 
       weekRange.textContent =
         formatWeekRange(selectedDate);
     }
   } else {
-    if (mode === "latest") {
-      dataUpdateStatus.textContent =
-      "• Data updated hourly";
-    } else {
-      dataUpdateStatus.textContent =
-      "• Data updated daily";
-    }
-    
     date.removeAttribute("max");
+
     weekRange.textContent = "";
   }
 }
 
 document
   .getElementById("date")
-  .addEventListener("change", updateDateState);
+  .addEventListener(
+    "change",
+    updateDateState,
+  );
 
-function setFeedStatus(message, error = false) {
-  const status = document.getElementById("feed-status");
+function setFeedStatus(
+  message,
+  error = false,
+) {
+  const status =
+    document.getElementById(
+      "feed-status",
+    );
 
   status.textContent = message;
 
@@ -1080,7 +1303,8 @@ function setDefaultDate() {
   const date = new Date();
 
   if (mode === "weekly") {
-    const day = date.getDay() || 7;
+    const day =
+      date.getDay() || 7;
 
     // Most recent completed Sunday.
     date.setDate(
@@ -1093,45 +1317,58 @@ function setDefaultDate() {
     );
   }
 
-  const yyyy = date.getFullYear();
-  const mm = String(
-    date.getMonth() + 1,
-  ).padStart(2, "0");
-  const dd = String(
-    date.getDate(),
-  ).padStart(2, "0");
+  const yyyy =
+    date.getFullYear();
 
-  dateInput.value = `${yyyy}-${mm}-${dd}`;
+  const mm =
+    String(
+      date.getMonth() + 1,
+    ).padStart(2, "0");
+
+  const dd =
+    String(
+      date.getDate(),
+    ).padStart(2, "0");
+
+  dateInput.value =
+    `${yyyy}-${mm}-${dd}`;
 }
 
 function getISOWeekId(date) {
-  const utcDate = new Date(
-    Date.UTC(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-    ),
-  );
+  const utcDate =
+    new Date(
+      Date.UTC(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+      ),
+    );
 
-  const day = utcDate.getUTCDay() || 7;
+  const day =
+    utcDate.getUTCDay() || 7;
 
   // Move to Thursday of the current ISO week.
   utcDate.setUTCDate(
     utcDate.getUTCDate() + 4 - day,
   );
 
-  const year = utcDate.getUTCFullYear();
+  const year =
+    utcDate.getUTCFullYear();
 
-  const yearStart = new Date(
-    Date.UTC(year, 0, 1),
-  );
+  const yearStart =
+    new Date(
+      Date.UTC(year, 0, 1),
+    );
 
-  const weekNumber = Math.ceil(
-    (
-      ((utcDate - yearStart) / 86400000) +
-      1
-    ) / 7,
-  );
+  const weekNumber =
+    Math.ceil(
+      (
+        (
+          (utcDate - yearStart) /
+          86400000
+        ) + 1
+      ) / 7,
+    );
 
   return `${year}-W${String(
     weekNumber,
@@ -1139,21 +1376,25 @@ function getISOWeekId(date) {
 }
 
 function getWeekRange(date) {
-  const selected = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-  );
+  const selected =
+    new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+    );
 
-  const day = selected.getDay() || 7;
+  const day =
+    selected.getDay() || 7;
 
-  const monday = new Date(selected);
+  const monday =
+    new Date(selected);
 
   monday.setDate(
     selected.getDate() - day + 1,
   );
 
-  const sunday = new Date(monday);
+  const sunday =
+    new Date(monday);
 
   sunday.setDate(
     monday.getDate() + 6,
@@ -1166,8 +1407,10 @@ function getWeekRange(date) {
 }
 
 function formatWeekRange(date) {
-  const { monday, sunday } =
-    getWeekRange(date);
+  const {
+    monday,
+    sunday,
+  } = getWeekRange(date);
 
   const options = {
     month: "short",
@@ -1192,7 +1435,8 @@ function formatWeekRange(date) {
 function formatNumber(value) {
   if (value >= 1000) {
     return (
-      Math.round(value / 1000) + "k"
+      Math.round(value / 1000) +
+      "k"
     );
   }
 
@@ -1201,9 +1445,14 @@ function formatNumber(value) {
 
 function updateSparkline(values) {
   const svg =
-    document.getElementById("sparkline");
+    document.getElementById(
+      "sparkline",
+    );
 
-  if (!values || values.length === 0) {
+  if (
+    !values ||
+    values.length === 0
+  ) {
     svg.innerHTML = "";
 
     return;
@@ -1265,7 +1514,8 @@ function updateSparkline(values) {
     const y =
       paddingTop +
       chartHeight -
-      (value / max) * chartHeight;
+      (value / max) *
+      chartHeight;
 
     yLabels.push({
       value,
@@ -1273,9 +1523,10 @@ function updateSparkline(values) {
     });
   }
 
-  const yAxis = yLabels
-    .map(
-      (label) => `
+  const yAxis =
+    yLabels
+      .map(
+        (label) => `
         <text
             class="axis-label"
             x="${paddingLeft - 8}"
@@ -1285,19 +1536,20 @@ function updateSparkline(values) {
             ${formatYAxis(label.value)}
         </text>
     `,
-    )
-    .join("");
+      )
+      .join("");
 
-  const gridLines = yLabels
-    .map((label) => {
-      if (
-        label.value === max ||
-        label.value === 0
-      ) {
-        return "";
-      }
+  const gridLines =
+    yLabels
+      .map((label) => {
+        if (
+          label.value === max ||
+          label.value === 0
+        ) {
+          return "";
+        }
 
-      return `
+        return `
         <line
             class="grid"
             x1="${paddingLeft}"
@@ -1306,45 +1558,56 @@ function updateSparkline(values) {
             y2="${label.y}">
         </line>
       `;
-    })
-    .join("");
+      })
+      .join("");
 
-  const points = values
-    .map((value, index) => {
-      const x =
-        paddingLeft +
-        (index / (values.length - 1)) *
-        chartWidth;
+  const points =
+    values
+      .map((value, index) => {
+        const x =
+          paddingLeft +
+          (
+            index /
+            (values.length - 1)
+          ) *
+          chartWidth;
 
-      const y =
-        paddingTop +
-        chartHeight -
-        (value / max) * chartHeight;
+        const y =
+          paddingTop +
+          chartHeight -
+          (value / max) *
+          chartHeight;
 
-      return `${x},${y}`;
-    })
-    .join(" ");
+        return `${x},${y}`;
+      })
+      .join(" ");
 
   const areaPoints =
     `${paddingLeft},${height - paddingBottom
     } ` +
     points +
     ` ${width - paddingRight
-    },${height - paddingBottom}`;
+    },${height - paddingBottom
+    }`;
 
-  const circles = values
-    .map((value, index) => {
-      const x =
-        paddingLeft +
-        (index / (values.length - 1)) *
-        chartWidth;
+  const circles =
+    values
+      .map((value, index) => {
+        const x =
+          paddingLeft +
+          (
+            index /
+            (values.length - 1)
+          ) *
+          chartWidth;
 
-      const y =
-        paddingTop +
-        chartHeight -
-        (value / max) * chartHeight;
+        const y =
+          paddingTop +
+          chartHeight -
+          (value / max) *
+          chartHeight;
 
-      return `
+        return `
         <circle
             class="sparkline-point"
             cx="${x}"
@@ -1352,8 +1615,8 @@ function updateSparkline(values) {
             r="2.5">
         </circle>
       `;
-    })
-    .join("");
+      })
+      .join("");
 
   svg.innerHTML = `
         ${gridLines}
@@ -1363,15 +1626,19 @@ function updateSparkline(values) {
             x1="${paddingLeft}"
             y1="${paddingTop}"
             x2="${paddingLeft}"
-            y2="${height - paddingBottom}">
+            y2="${height - paddingBottom
+    }">
         </line>
 
         <line
             class="axis"
             x1="${paddingLeft}"
-            y1="${height - paddingBottom}"
-            x2="${width - paddingRight}"
-            y2="${height - paddingBottom}">
+            y1="${height - paddingBottom
+    }"
+            x2="${width - paddingRight
+    }"
+            y2="${height - paddingBottom
+    }">
         </line>
 
         ${yAxis}
@@ -1399,20 +1666,27 @@ function updateModeState() {
     document.getElementById("date");
 
   const load =
-    document.getElementById("load-feed");
+    document.getElementById(
+      "load-feed",
+    );
 
   const selectableMode =
     mode === "daily" ||
     mode === "weekly";
 
-  date.disabled = !selectableMode;
-  load.disabled = !selectableMode;
+  date.disabled =
+    !selectableMode;
+
+  load.disabled =
+    !selectableMode;
 
   updateDateState();
 }
 
 document
-  .querySelectorAll('input[name="mode"]')
+  .querySelectorAll(
+    'input[name="mode"]',
+  )
   .forEach((input) => {
     input.addEventListener(
       "change",
@@ -1439,21 +1713,25 @@ document
 updateModeState();
 
 function timeAgo(timestamp) {
-  const now = new Date();
+  const now =
+    new Date();
 
   const updated =
     new Date(timestamp);
 
-  const seconds = Math.floor(
-    (now - updated) / 1000,
-  );
+  const seconds =
+    Math.floor(
+      (now - updated) / 1000,
+    );
 
   if (seconds < 60) {
     return "just now";
   }
 
   const minutes =
-    Math.floor(seconds / 60);
+    Math.floor(
+      seconds / 60,
+    );
 
   if (minutes < 60) {
     return `${minutes} minute${minutes === 1 ? "" : "s"
@@ -1461,7 +1739,9 @@ function timeAgo(timestamp) {
   }
 
   const hours =
-    Math.floor(minutes / 60);
+    Math.floor(
+      minutes / 60,
+    );
 
   if (hours < 24) {
     return `${hours} hour${hours === 1 ? "" : "s"
@@ -1469,14 +1749,18 @@ function timeAgo(timestamp) {
   }
 
   const days =
-    Math.floor(hours / 24);
+    Math.floor(
+      hours / 24,
+    );
 
   return `${days} day${days === 1 ? "" : "s"
     } ago`;
 }
 
 const toolbar =
-  document.querySelector(".live-toolbar");
+  document.querySelector(
+    ".live-toolbar",
+  );
 
 const hideButton =
   document.getElementById(
@@ -1558,10 +1842,13 @@ const pinned =
     "pinControls",
   ) === "true";
 
-checkbox.checked = pinned;
+checkbox.checked =
+  pinned;
 
 if (pinned) {
-  controls.classList.add("sticky");
+  controls.classList.add(
+    "sticky",
+  );
 }
 
 checkbox.addEventListener(
@@ -1579,12 +1866,16 @@ checkbox.addEventListener(
   },
 );
 
-
 function getLastCompletedWeekEnd() {
-  const today = new Date();
-  const day = today.getDay() || 7; // Sunday = 7
+  const today =
+    new Date();
 
-  const lastSunday = new Date(today);
+  const day =
+    today.getDay() || 7;
+
+  const lastSunday =
+    new Date(today);
+
   lastSunday.setDate(
     today.getDate() - day,
   );
@@ -1593,36 +1884,54 @@ function getLastCompletedWeekEnd() {
 }
 
 function formatDateInputValue(date) {
-  const yyyy = date.getFullYear();
-  const mm = String(
-    date.getMonth() + 1,
-  ).padStart(2, "0");
-  const dd = String(
-    date.getDate(),
-  ).padStart(2, "0");
+  const yyyy =
+    date.getFullYear();
+
+  const mm =
+    String(
+      date.getMonth() + 1,
+    ).padStart(2, "0");
+
+  const dd =
+    String(
+      date.getDate(),
+    ).padStart(2, "0");
 
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function updateModeLabels(mode, date) {
+function updateModeLabels(
+  mode,
+  date,
+) {
   const eventsLabel =
-    document.getElementById("events-label");
+    document.getElementById(
+      "events-label",
+    );
 
   const trendLabel =
-    document.getElementById("trend-label");
+    document.getElementById(
+      "trend-label",
+    );
 
   if (mode === "latest") {
-    eventsLabel.textContent = "Events (24h)";
+    eventsLabel.textContent =
+      "Events (24h)";
+
     trendLabel.textContent =
       "Time (UTC) — Last 24 Hours";
+
     return;
   }
 
   if (mode === "daily") {
-    eventsLabel.textContent = "Events (Daily)";
+    eventsLabel.textContent =
+      "Events (Daily)";
 
     const selectedDate =
-      new Date(`${date}T00:00:00`);
+      new Date(
+        `${date}T00:00:00`,
+      );
 
     trendLabel.textContent =
       `Time (UTC) — ${selectedDate.toLocaleDateString(
@@ -1632,19 +1941,26 @@ function updateModeLabels(mode, date) {
           day: "numeric",
           year: "numeric",
         },
-      )}`;
+      )
+      }`;
 
     return;
   }
 
   if (mode === "weekly") {
-    eventsLabel.textContent = "Events (Weekly)";
+    eventsLabel.textContent =
+      "Events (Weekly)";
 
     const selectedDate =
-      new Date(`${date}T00:00:00`);
+      new Date(
+        `${date}T00:00:00`,
+      );
 
     trendLabel.textContent =
-      `Time (UTC) — ${formatWeekRange(selectedDate)}`;
+      `Time (UTC) — ${formatWeekRange(
+        selectedDate,
+      )
+      }`;
   }
 }
 
@@ -1657,8 +1973,11 @@ function addDetailMetric(
     return;
   }
 
-  const item = document.createElement("div");
-  item.className = "honeypot-detail-metric";
+  const item =
+    document.createElement("div");
+
+  item.className =
+    "honeypot-detail-metric";
 
   const labelElement =
     document.createElement("div");
@@ -1666,7 +1985,8 @@ function addDetailMetric(
   labelElement.className =
     "honeypot-detail-label";
 
-  labelElement.textContent = label;
+  labelElement.textContent =
+    label;
 
   const valueElement =
     document.createElement("div");
@@ -1677,12 +1997,18 @@ function addDetailMetric(
   valueElement.textContent =
     value.toLocaleString();
 
-  item.appendChild(labelElement);
-  item.appendChild(valueElement);
+  item.appendChild(
+    labelElement,
+  );
 
-  container.appendChild(item);
+  item.appendChild(
+    valueElement,
+  );
+
+  container.appendChild(
+    item,
+  );
 }
-
 
 function addDetailList(
   container,
@@ -1706,17 +2032,6 @@ function addDetailList(
   item.className =
     "honeypot-detail-item";
 
-  const header =
-    document.createElement("div");
-
-  header.className =
-    "honeypot-detail-toggle";
-
-  header.setAttribute(
-    "aria-expanded",
-    "false",
-  );
-
   const labelGroup =
     document.createElement("span");
 
@@ -1733,39 +2048,15 @@ function addDetailList(
     labelElement,
   );
 
-  header.appendChild(
-    labelGroup,
-  );
-
   addInfoButton(
     labelGroup,
     label,
     infoKey,
   );
 
-  const viewButton =
-    document.createElement("button");
-
-  viewButton.className =
-    "honeypot-detail-view-button";
-
-  viewButton.type =
-    "button";
-
-  viewButton.textContent =
-    "View";
-
-  header.appendChild(
-    viewButton,
+  item.appendChild(
+    labelGroup,
   );
-
-  const content =
-    document.createElement("div");
-
-  content.className =
-    "honeypot-detail-content";
-
-  content.hidden = true;
 
   const table =
     document.createElement("table");
@@ -1800,69 +2091,28 @@ function addDetailList(
       countCell.textContent =
         countField &&
           typeof entry[countField] === "number"
-          ? entry[countField].toLocaleString()
+          ? entry[
+            countField
+          ].toLocaleString()
           : "—";
 
-      row.appendChild(
-        valueCell,
-      );
+      row.appendChild(valueCell);
+      row.appendChild(countCell);
 
-      row.appendChild(
-        countCell,
-      );
-
-      table.appendChild(
-        row,
-      );
+      table.appendChild(row);
     },
   );
 
-  content.appendChild(
-    table,
-  );
+  item.appendChild(table);
 
-  viewButton.addEventListener(
-    "click",
-    () => {
-      const expanded =
-        header.getAttribute(
-          "aria-expanded",
-        ) === "true";
-
-      header.setAttribute(
-        "aria-expanded",
-        String(!expanded),
-      );
-
-      content.hidden =
-        expanded;
-
-      viewButton.textContent =
-        expanded
-          ? "View"
-          : "Hide";
-
-      viewButton.classList.toggle(
-        "is-expanded",
-        !expanded,
-      );
-    },
-  );
-
-  item.appendChild(
-    header,
-  );
-
-  item.appendChild(
-    content,
-  );
-
-  container.appendChild(
-    item,
-  );
+  container.appendChild(item);
 }
 
-function addASNList(container, label, values) {
+function addASNList(
+  container,
+  label,
+  values,
+) {
   if (
     !Array.isArray(values) ||
     values.length === 0
@@ -1876,44 +2126,16 @@ function addASNList(container, label, values) {
   item.className =
     "honeypot-detail-item";
 
-  const header =
-    document.createElement("button");
-
-  header.className =
-    "honeypot-detail-toggle";
-
-  header.type = "button";
-
-  header.setAttribute(
-    "aria-expanded",
-    "false",
-  );
-
   const labelElement =
-    document.createElement("span");
+    document.createElement("div");
+
+  labelElement.className =
+    "honeypot-detail-label";
 
   labelElement.textContent =
     label;
 
-  const viewButton =
-    document.createElement("span");
-
-  viewButton.className =
-    "honeypot-detail-view-button";
-
-  viewButton.textContent =
-    "View";
-
-  header.appendChild(labelElement);
-  header.appendChild(viewButton);
-
-  const content =
-    document.createElement("div");
-
-  content.className =
-    "honeypot-detail-content";
-
-  content.hidden = true;
+  item.appendChild(labelElement);
 
   const table =
     document.createElement("table");
@@ -1924,13 +2146,16 @@ function addASNList(container, label, values) {
   const headerRow =
     document.createElement("tr");
 
-  ["Organization", "ASN", "Events"].forEach(
+  [
+    "Organization",
+    "ASN",
+    "Events",
+  ].forEach(
     (text) => {
       const th =
         document.createElement("th");
 
-      th.textContent =
-        text;
+      th.textContent = text;
 
       headerRow.appendChild(th);
     },
@@ -1952,9 +2177,10 @@ function addASNList(container, label, values) {
       const asn =
         document.createElement("td");
 
-      asn.textContent = entry.asn
-        ? `AS${entry.asn}`
-        : "Unknown";
+      asn.textContent =
+        entry.asn
+          ? `AS${entry.asn}`
+          : "Unknown";
 
       const events =
         document.createElement("td");
@@ -1964,46 +2190,32 @@ function addASNList(container, label, values) {
           ? entry.count.toLocaleString()
           : "—";
 
-      row.appendChild(organization);
-      row.appendChild(asn);
-      row.appendChild(events);
+      row.appendChild(
+        organization,
+      );
+
+      row.appendChild(
+        asn,
+      );
+
+      row.appendChild(
+        events,
+      );
 
       table.appendChild(row);
     },
   );
 
-  content.appendChild(table);
-
-  header.addEventListener(
-    "click",
-    () => {
-      const expanded =
-        header.getAttribute(
-          "aria-expanded",
-        ) === "true";
-
-      header.setAttribute(
-        "aria-expanded",
-        String(!expanded),
-      );
-
-      content.hidden = expanded;
-
-      viewButton.textContent =
-        expanded ? "View" : "Hide";
-
-      viewButton.classList.toggle(
-        "is-expanded",
-        !expanded,
-      );
-    },
-  );
-
-  item.appendChild(header);
-  item.appendChild(content);
+  item.appendChild(table);
 
   container.appendChild(item);
 }
+
+/*
+ * ==========================================
+ * Info Buttons
+ * ==========================================
+ */
 
 function addInfoButton(
   container,
@@ -2014,17 +2226,23 @@ function addInfoButton(
     return;
   }
 
+  if (
+    container.querySelector(
+      ".info-button",
+    )
+  ) {
+    return;
+  }
+
   const infoButton =
     document.createElement("button");
 
   infoButton.className =
     "info-button";
 
-  infoButton.type =
-    "button";
+  infoButton.type = "button";
 
-  infoButton.textContent =
-    "i";
+  infoButton.textContent = "i";
 
   infoButton.setAttribute(
     "aria-label",
@@ -2039,7 +2257,15 @@ function addInfoButton(
   );
 }
 
+/*
+ * ==========================================
+ * Info Dialog
+ * ==========================================
+ */
+
 function initInfoButtons() {
+  console.log("INIT INFO BUTTONS");
+
   const dialog =
     document.getElementById(
       "info-dialog",
@@ -2095,6 +2321,9 @@ function initInfoButtons() {
   document.addEventListener(
     "click",
     (event) => {
+      //console.log("DOCUMENT CLICK", event.target);
+      console.log("INFO HANDLER RUNNING");
+
       const button =
         event.target.closest(
           ".info-button",
@@ -2220,3 +2449,9 @@ function initInfoButtons() {
 }
 
 initInfoButtons();
+
+console.log("INFO TEST SCRIPT LOADED");
+
+document.addEventListener("click", (event) => {
+  console.log("ANY CLICK", event.target);
+});
