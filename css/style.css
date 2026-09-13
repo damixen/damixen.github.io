@@ -1229,14 +1229,13 @@ button:disabled {
   width: 100%;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   padding: 10px 4px;
-  border: 0;
   background: transparent;
   color: var(--text);
   font: inherit;
   text-align: left;
-  cursor: pointer;
 }
 
 .honeypot-detail-toggle:hover {
@@ -1276,6 +1275,7 @@ button:disabled {
   color: var(--accent);
   padding: 4px 10px;
   font-size: 0.85rem;
+  cursor: pointer;
 }
 
 .honeypot-detail-view-button.is-expanded {
@@ -1391,4 +1391,149 @@ button:disabled {
 .honeypot-table-container .dashboard-table td:last-child {
   text-align: right;
   color: var(--muted);
+}
+
+/* ==========================================
+   Information Button
+   ========================================== */
+
+.info-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  padding: 0;
+  border: 1px solid var(--muted);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.info-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.info-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+
+/* ==========================================
+   Information Dialog
+   ========================================== */
+
+.info-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.info-dialog[hidden] {
+  display: none;
+}
+
+.info-dialog-content {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 8px 30px var(--shadow);
+}
+
+.info-dialog-content h2 {
+  margin: 0 32px 20px 0;
+}
+
+.info-dialog-content h3 {
+  margin: 18px 0 6px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.info-dialog-content p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.info-dialog-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.info-dialog-close:hover {
+  color: var(--text);
+}
+
+.info-dialog-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+#info-dialog-links {
+  margin-top: 18px;
+}
+
+#info-dialog-links a {
+  color: var(--accent);
+}
+
+.honeypot-name-info {
+  display: inline-grid;
+  grid-template-columns: 90px 18px;
+  column-gap: 8px;
+  align-items: center;
+}
+
+.honeypot-name-info .info-button {
+  margin-left: 4px;
+}
+
+.honeypot-detail-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.honeypot-detail-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.honeypot-detail-label .info-button {
+  margin-left: 0;
 }
