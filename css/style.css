@@ -1637,3 +1637,57 @@ button:disabled {
 .info-button {
   transform: translateY(-2px);
 }
+
+/* Prevent long telemetry values from expanding the card */
+#honeypot-details {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+#honeypot-details .honeypot-detail-card {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+#honeypot-details .honeypot-detail-content {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+#honeypot-details .honeypot-detail-item {
+  min-width: 0;
+  max-width: 100%;
+}
+
+#honeypot-details .honeypot-detail-table {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+#honeypot-details .honeypot-detail-table td:first-child {
+  width: auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+#honeypot-details .honeypot-detail-table td:nth-child(2) {
+  width: 70px;
+  min-width: 70px;
+  white-space: nowrap;
+  text-align: right;
+}
+
+#honeypot-details .honeypot-detail-value {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: pre;
+}
