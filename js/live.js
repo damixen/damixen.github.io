@@ -706,6 +706,7 @@ function renderCowrieDetails(
     "count",
     null,
     "metrics.cowrie.commands",
+    20
   );
 
   addDetailList(
@@ -2018,6 +2019,7 @@ function addDetailList(
   countField,
   formatter,
   infoKey,
+  limit = 10
 ) {
   if (
     !Array.isArray(values) ||
@@ -2064,7 +2066,7 @@ function addDetailList(
   table.className =
     "dashboard-table honeypot-detail-table";
 
-  values.slice(0, 10).forEach(
+  values.slice(0, limit).forEach(
     (entry) => {
       const row =
         document.createElement("tr");
