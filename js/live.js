@@ -2266,8 +2266,6 @@ function addInfoButton(
  */
 
 function initInfoButtons() {
-  console.log("INIT INFO BUTTONS");
-
   const dialog =
     document.getElementById(
       "info-dialog",
@@ -2323,8 +2321,6 @@ function initInfoButtons() {
   document.addEventListener(
     "click",
     (event) => {
-      //console.log("DOCUMENT CLICK", event.target);
-      console.log("INFO HANDLER RUNNING");
 
       const button =
         event.target.closest(
@@ -2451,9 +2447,3 @@ function initInfoButtons() {
 }
 
 initInfoButtons();
-
-console.log("INFO TEST SCRIPT LOADED");
-
-document.addEventListener("click", (event) => {
-  console.log("ANY CLICK", event.target);
-});
