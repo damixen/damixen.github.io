@@ -1,0 +1,801 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+
+    <meta name="description"
+        content="Adding an event system and execution tracing to the ESKit AI agent to make multi-step LLM behavior observable and easier to debug." />
+
+    <meta property="og:title" content="Observing the Agent: Adding Events and Tracing to ESKit AI" />
+    <meta property="og:description"
+        content="Building an event-driven observability layer and JSONL tracing for the ESKit AI agent." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://gingerpot.damixen.com/blog/eskit-ai-cli-helper-6.html" />
+
+    <title>Observing the Agent: Adding Events and Tracing to ESKit AI | GingerPot</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+
+    <link rel="icon" href="../favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="../favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+
+    <link rel="stylesheet" href="../css/style.css" />
+
+    <script type="module" src="/js/mermaid.js"></script>
+
+
+</head>
+
+<body>
+
+
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/live.html">Live</a>
+                <a class="active" href="/blog.html">Blog</a>
+                <a href="/about.html">About</a>
+                <a href="/collaborate.html">Collaborate</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+
+        <p class="blog-next">
+            <strong>
+                Previous:
+                <a href="/blog/eskit-ai-cli-helper-5.html">
+                    ← Agent Loop: Letting the LLM Decide When to Act, Ask, and Stop
+                </a>
+            </strong>
+        </p>
+
+        <article class="blog-card">
+
+            <header class="blog-header">
+
+                <p class="series">
+                    Transforming a CLI into an AI-Native CLI
+                </p>
+
+                <p class="blog-kicker">AI / CLI / ESKit / Observability</p>
+                <p>September 2026 · ESKit experiment</p>
+
+                <h1>
+                    Observing the Agent: Adding Events and Tracing to ESKit AI
+                </h1>
+
+                <p class="blog-meta">
+                    Making multi-step LLM behavior observable
+                </p>
+
+            </header>
+
+            <section>
+
+                <h2>The Agent Was Working — But What Was It Doing?</h2>
+
+                <p>
+                    In the previous part of this series, I moved ESKit's AI interface from a
+                    one-shot tool call to a multi-step agent loop.
+                </p>
+
+                <p>
+                    That changed the behavior of the application quite a bit.
+                    The LLM could now inspect information, call a tool, receive the result,
+                    decide what to do next, wait, ask the user for information, call another
+                    tool, and eventually decide that the task was complete.
+                </p>
+
+                <p>
+                    This worked, but it introduced a new problem:
+                    <strong>the more autonomous the agent became, the harder it was to understand
+                        exactly what it had done.</strong>
+                </p>
+
+                <p>
+                    A simple terminal output such as:
+                </p>
+
+                <pre><code>→ Using snap_create
+→ Using wait_tool
+→ Using snap_create</code></pre>
+
+                <p>
+                    tells me what tools were called, but not the complete execution flow.
+                    I wanted to know which model response caused each tool call, what arguments
+                    were supplied, what results came back, and how the interaction progressed.
+                </p>
+
+                <p>
+                    I also wanted to be able to inspect the execution <em>after</em> it happened.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Why Logging Wasn't Quite Enough</h2>
+
+                <p>
+                    My first instinct was to add more logging to the agent loop.
+                    That would have been easy enough.
+                </p>
+
+                <p>
+                    But the agent was already starting to have several different kinds of
+                    activity:
+                </p>
+
+                <ul>
+                    <li>LLM prompts</li>
+                    <li>LLM responses</li>
+                    <li>Tool calls</li>
+                    <li>Tool results</li>
+                    <li>User input</li>
+                    <li>Final responses</li>
+                    <li>Errors</li>
+                </ul>
+
+                <p>
+                    I didn't want the agent implementation to become filled with
+                    <code>print()</code> statements and logging code for every new event.
+                    More importantly, I wanted the same execution information to be usable
+                    by more than one consumer.
+                    For example, the terminal might want a short progress message while a
+                    trace file might want the complete structured event.
+                </p>
+
+                <p>
+                    That led me to an event-based design.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Introducing an Event Bus</h2>
+
+                <p>
+                    Instead of having the agent directly print information, the agent emits
+                    events.
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["AI Agent"] --> B["Event Bus"]
+
+                    B --> C["AI CLI Listener"]
+                    B --> D["AI Tracer"]
+                    B --> E["Future Listeners (Web, UI Libraries...)"]
+
+                    C --> F["Terminal"]
+                    D --> G["JSONL Trace"]
+                    E --> H["Future Output..."]
+                </div>
+
+                <p>
+                    The agent doesn't need to know what happens to an event after it is emitted.
+                    It simply reports what happened.
+                    The Event Bus then sends the event to any registered listeners.
+                </p>
+
+                <p>
+                    This creates a useful separation: console output and persistent tracing
+                    become two different consumers of the same execution information.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Event Structure</h2>
+
+                <p>
+                    I wanted the events to be more than arbitrary log messages.
+                    Each event has a type, timestamp, flow ID, sequence ID, and associated data.
+                </p>
+
+                <pre><code>{
+    "type_id": 1004,
+    "type": "ai.tool_call",
+    "timestamp": "2026-09-06T04:12:31.123456+00:00",
+    "flow_id": "675b3272446d42c18bea0f8edd72de6e",
+    "sequence_id": 7,
+    "data": {
+        "tool": "snap_create",
+        "arguments": {
+            "snapshot": "daily_repo/2026.09.01"
+        }
+    }
+}</code></pre>
+
+
+                <ul>
+                    <li>The <code>type_id</code> provides a stable machine-readable identifier.</li>
+                    <li>The <code>type</code> makes the event easier to inspect as a human.</li>
+                    <li>The <code>flow_id</code> identifies the overall AI interaction.</li>
+                    <li>The <code>sequence_id</code> gives events their order within that flow.</li>
+                </ul>
+
+                <p>
+                    I deliberately kept the flow information as metadata on the event rather
+                    than putting it into every event's data payload.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Defining the Events</h2>
+
+                <p>
+                    The initial event set is intentionally small.
+                </p>
+
+                <pre><code>ai.run_started
+ai.llm_prompt
+ai.llm_response
+ai.tool_call
+ai.tool_result
+ai.user_input_requested
+ai.user_input_received
+ai.function_call_started
+ai.function_call_completed
+ai.final_response
+ai.error</code></pre>
+
+
+                <p>
+                    <a href="https://github.com/damixen/eskit/tree/main/eskit/events/registry.json" target="_blank"
+                        rel="noopener noreferrer">
+                        Events Definitions →
+                    </a>
+                </p>
+
+                <p>Event Flow:</p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A(["Prompt"]) --> B["ai.run_started"]
+                    B --> C["ai.llm_prompt"]
+                    C --> O(["LLM"])
+                    O --> D["ai.llm_response"]
+
+                    D --> E["ai.tool_call"]
+                    D --> F["ai.final_response"]
+
+                    E --> G["ai.function_call_started"]
+                    G --> H(["ESKit"])
+                    G --> I(["CORE"])
+                    H --> M["ai.function_call_completed"]
+                    I --> M
+
+                    E --> J["ai.user_input_requested"]
+                    J --> K(["User"])
+                    K --> N["ai.user_input_received"]
+
+                    M --> L["ai.tool_result"]
+                    N --> L
+
+                    L --> C
+                </div>
+
+                <p>
+                    These events describe the major transitions in an AI interaction without
+                    trying to model every internal detail of the application.
+                    I also created an event registry and generated the Python event definitions
+                    from it.
+                    This gives each event a stable numeric identifier while keeping the
+                    human-readable event name in one place.
+                </p>
+
+                <p>
+                    The generated emitter gives the agent code simple methods such as:
+                </p>
+
+                <pre><code>emitter.tool_call(
+    tool="snap_create",
+    arguments={
+        "snapshot": "daily_repo/2026.09.01"
+    }
+)
+
+emitter.tool_result(
+    tool="snap_create",
+    result=result
+)</code></pre>
+
+
+                <p>
+                    The agent doesn't need to construct the event object or manage sequence
+                    numbers itself. The Event Bus handles that part.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Why a Sequence ID?</h2>
+
+                <p>
+                    The sequence ID is a small detail, but it became useful almost immediately.
+                </p>
+
+                <p>
+                    An agent interaction can produce many events:
+                </p>
+
+                <pre><code>1  ai.run_started
+2  ai.llm_prompt
+3  ai.llm_response
+4  ai.tool_call
+5  ai.function_call_started
+6  ai.function_call_completed
+7  ai.tool_result
+8  ai.llm_prompt
+9  ai.llm_response
+10 ai.tool_call
+11 ai.user_input_requested
+12 ai.user_input_received
+13 ai.tool_result
+...</code></pre>
+
+
+                <p>
+                    Timestamps are useful, but a sequence number gives me an explicit ordering
+                    within the flow.
+                    It also means different event types don't need to maintain their own
+                    counters. The Event Bus owns the ordering for the entire interaction.
+                    That makes it easier to reconstruct what happened later.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Separating Console Output from Execution</h2>
+
+                <p>
+                    Once events existed, I moved the AI-specific terminal output into a
+                    dedicated listener.
+                </p>
+
+                <p>
+                    For example, a normal run might display:
+                </p>
+
+                <pre><code>AI flow started (claude-haiku-4-5-20251001)
+→ Using ask_user
+← Received response from: ask_user
+→ Using index_create
+← Received response from: index_create
+→ Using wait_tool
+← Received response from: wait_tool
+AI final response received </code></pre>
+
+
+                <p>
+                    With verbose output enabled, the listener can show additional information
+                    such as tool arguments, flow IDs, and execution timing.
+                    The important part is that none of this presentation logic needs to be
+                    embedded in the agent loop itself.
+                </p>
+
+                <p>
+                    The agent reports events. The listener decides what is appropriate to
+                    display.
+                    This also means I can change the terminal presentation without changing
+                    the agent's behavior.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Adding Persistent Tracing</h2>
+
+                <p>
+                    The next step was to make the same events persistent.
+                    I added an AI tracer that writes each event as a JSON object on its own line.
+                </p>
+
+                <p>
+                    The result is a JSONL trace:
+                </p>
+
+                <pre><code>{"type_id":1001,"type":"ai.run_started",...}
+{"type_id":1002,"type":"ai.llm_prompt",...}
+{"type_id":1003,"type":"ai.llm_response",...}
+{"type_id":1004,"type":"ai.tool_call",...}
+{"type_id":1005,"type":"ai.tool_result",...}
+{"type_id":1002,"type":"ai.llm_prompt",...}
+...</code></pre>
+
+
+                <p>
+                    Tracing is optional and can be enabled with:
+                </p>
+
+                <pre><code>eskit ai "show me the latest snapshots" --trace</code></pre>
+
+                <p>
+                    Trace files are automatically created under:
+                </p>
+
+                <pre><code>.eskit/traces/</code></pre>
+
+                <p>
+                    The file name includes the timestamp and part of the flow ID, which makes
+                    individual executions easy to identify.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Why JSONL?</h2>
+
+                <p>
+                    I considered the trace simply as a JSON document containing an array of
+                    events, but JSONL was a better fit for how the tracer works.
+                    Events can be written as they happen rather than waiting until the entire
+                    interaction has completed.
+                    That has a useful property for an agent:
+                    <strong>if the process fails halfway through, the trace still contains
+                        the events that were successfully written before the failure.</strong>
+                    JSONL also makes the trace easy to process later. Individual events can be
+                    read line by line without loading the entire execution into memory.
+                </p>
+
+                <p>
+                    It also leaves the door open for future analysis, replay, or importing
+                    execution events into another system.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>The Trace Changed How I Debug the Agent</h2>
+
+                <p>
+                    When I repeated one of the snapshot prompts after adding the
+                    tracer, I noticed something interesting.
+                    I ran essentially the same request to create snapshots and wait about
+                    30 seconds between operations.
+                </p>
+
+                <pre><code>eskit ai "Can you create missing snapshots ... Please wait for each snapshot to be created, and before creating the next snapshot, please wait about 30 seconds."</code></pre>
+
+                <p>
+                    In one run, the agent used <code>ask_user</code> as a way to pause before
+                    continuing.
+                </p>
+
+                <pre><code>→ Using ask_user
+Waiting 30 seconds before creating snapshot ...
+> ok
+← User Input Received</code></pre>
+
+
+                <p>
+                    The tracing and terminal output made that behavior visible, but it also
+                    made me think about a broader question: what happens when I want the agent
+                    to perform an action while still retaining deterministic control over part
+                    of that behavior?
+                </p>
+
+                <p>
+                    This led me to introduce <strong>core</strong> tools for operations where I wanted
+                    the LLM to request the action, but I wanted to control how the action
+                    actually happened.
+                    For this experiment, I introduced <code>wait_tool</code>.
+                    The tool accepts the previous tool and next tool as part of its arguments,
+                    along with the requested duration.
+                </p>
+
+                <p>
+                    After adding <code>wait_tool</code>, the agent used it in the next run with
+                    the same prompt.
+                </p>
+
+                <pre><code>→ Using wait_tool {'previous_tool': 'index_create', 'next_tool': 'index_delete', 'duration': 5}
+</code></pre>
+
+
+                <p>
+                    That was useful by itself, but the trace made the behavior much easier
+                    to understand.
+                </p>
+
+                <p>
+                    Instead of only seeing:
+                </p>
+
+                <pre><code>→ Using snap_create
+→ Using wait_tool
+→ Using snap_create</code></pre>
+
+
+                <p>
+                    I could inspect the sequence of model responses and tool calls that led
+                    to those actions.
+                    This matters because LLM behavior is not deterministic in the same way as
+                    a traditional function call.
+                </p>
+
+                <p>
+                    If an agent behaves differently between two runs, I want an artifact that
+                    lets me compare the executions rather than relying on terminal output or
+                    memory.
+                    The trace effectively becomes an execution history for the agent.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Observability Becomes More Important as the Agent Grows</h2>
+
+                <p>
+                    This made me think about the difference between a normal CLI operation
+                    and an agent operation.
+                </p>
+
+                <p>
+                    A traditional command might have a relatively simple execution path:
+                </p>
+
+                <div class="mermaid">
+                    flowchart LR
+                    A["Command"] --> B["Validation"] --> C["Execution"] --> D["Result"]
+                </div>
+
+                <p>
+                    The agent introduces another layer:
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A(["User"]) --> B(["LLM"])
+                    B --> C["ai.llm_response"]
+                    C --> D["ai.tool_call"]
+                    D --> E["ai.function_call_started"]
+                    E --> F(["ESKit"])
+                    E --> G(["CORE"])
+                    F --> H["ai.function_call_completed"]
+                    G --> H
+                    D --> I["ai.user_input_requested"]
+                    I --> J(["User"])
+                    J --> K["ai.user_input_received"]
+                    H --> L["ai.tool_result"]
+                    K --> L
+                    L --> C
+                    C --> M["ai.final_response"]
+                </div>
+
+                <p>
+                    The execution path is now dynamic.
+                    The LLM can decide whether to call another tool, ask the user something,
+                    or stop.
+                    That makes observability less like traditional logging and more like
+                    recording an execution flow.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>The Event System Is Not Just for AI</h2>
+
+                <p>
+                    Although I built the first events for the AI interface, I intentionally
+                    kept the Event Bus generic.
+                    The event itself doesn't know that it is being used for AI.
+                    It contains a type, timestamp, metadata, and event data.
+                </p>
+
+                <p>
+                    That means the same infrastructure could eventually be used for other
+                    ESKit operations if there is a useful reason to observe them.
+                    For example, a future listener could send selected operational events
+                    somewhere else without changing the code that performs the operation.
+                    I don't have a specific need for that yet, so I'm deliberately leaving
+                    the system small.
+                </p>
+
+                <p>
+                    For now, the useful abstraction is simply:
+                </p>
+
+                <blockquote>
+                    <strong>The code reports what happened; listeners decide what to do with it.</strong>
+                </blockquote>
+
+            </section>
+
+            <section>
+
+                <h2>Tracing Also Introduces a New Responsibility</h2>
+
+                <p>
+                    Recording everything creates another problem: the trace can contain a lot
+                    of information.
+                    An <code>ai.llm_prompt</code> event can contain the system prompt,
+                    conversation messages, and tool definitions.
+                    A tool result can also contain information that may not be appropriate
+                    to persist without filtering.
+                </p>
+
+                <p>
+                    During development I also encountered an important reminder that debugging
+                    output can contain sensitive configuration information.
+                    That means the tracer cannot simply be treated as a harmless dump of
+                    everything the application knows.
+                    For the initial implementation, I wanted to establish the event and trace
+                    pipeline first.
+                    The next step is to introduce a deliberate serialization and sanitization
+                    boundary so sensitive values can be filtered before they are written to
+                    persistent traces.
+                    I also don't want the trace to become a recording of hidden model reasoning.
+                    The goal is to capture the observable execution:
+                    prompts, responses, tool calls, results, user interaction, and metadata
+                    useful for debugging and analysis.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Learnings</h2>
+
+                <ul>
+                    <li>
+                        <h3>Humans need an execution history too</h3>
+
+                        <p>
+                            Once the LLM can take multiple actions, a final response doesn't tell me
+                            enough about what happened along the way.
+                            The sequence of events is part of the useful information.
+                        </p>
+                    </li>
+
+                    <li>
+                        <h3>Events are cleaner than scattered logging</h3>
+
+                        <p>
+                            The Event Bus gives the agent one simple responsibility:
+                            report events.
+                            Console output, tracing, and future consumers can be implemented
+                            independently.
+                        </p>
+                    </li>
+
+                    <li>
+                        <h3>JSONL is a useful format for execution traces</h3>
+
+                        <p>
+                            Events can be persisted incrementally, inspected easily, and processed
+                            later without requiring a large in-memory execution record.
+                        </p>
+                    </li>
+
+                    <li>
+                        <h3>Non-deterministic behavior needs observability</h3>
+
+                        <p>
+                            When the same request can result in different tool choices or execution
+                            paths, having a persistent trace makes those differences observable.
+                        </p>
+                    </li>
+
+                    <li>
+                        <h3>If a deterministic behavior is required, make a tool</h3>
+
+                        <p>
+                            When I want the agent to perform an action but need deterministic control
+                            over how that action happens, I can provide a tool that represents the
+                            action.
+                            The LLM still decides when to request the tool, while ESKit controls the
+                            actual behavior.
+                        </p>
+                    </li>
+
+                    <li>
+                        <h3>Tracing needs a security boundary</h3>
+
+                        <p>
+                            An execution trace can contain much more information than a normal log.
+                            That makes sanitization and careful handling of persistent traces important
+                            as the system evolves.
+                        </p>
+                    </li>
+                </ul>
+
+            </section>
+
+            <section>
+
+                <h2>From Agent to Observable Agent</h2>
+
+                <p>
+                    The progression of the series now looks like this:
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["Part 1 - Argparse → AI CLI Helper"]
+                    A --> B["Part 2 - Tool Calls → ESKit Commands"]
+                    B --> C["Part 3 - Separate Execution and Presentation"]
+                    C --> D["Part 4 - 25K Tokens → 7K Tokens"]
+                    D --> E["Part 5 - One Tool Call → Agent Loop"]
+                    E --> F["Part 6 - Agent Loop → Observable Execution"]
+                </div>
+
+                <p>
+                    At this point, ESKit has moved quite a bit beyond the original experiment
+                    of simply asking an LLM to generate CLI commands.
+                    The AI layer can now reason across multiple operations, interact with the
+                    user, execute tools through ESKit, and produce a persistent record of what
+                    happened.
+                    That last part is becoming increasingly important.
+                    As the agent becomes more capable, I don't just want it to be able to act.
+                    I want to understand <strong>how it acted</strong>.
+                </p>
+
+                <p>
+                    The next question is therefore not simply how to give the agent more
+                    capabilities, but how to give it the right context at the right time
+                    without sending everything every time.
+                    And, as the system grows, I want to continue refining the boundary between
+                    the LLM and ESKit.
+                </p>
+
+            </section>
+
+            <section>
+
+                <p>
+                    <a href="https://github.com/damixen/eskit/tree/main/eskit/ai" target="_blank"
+                        rel="noopener noreferrer">
+                        ESKit AI implementation →
+                    </a>
+                </p>
+
+                <blockquote>
+                    This is part of an ongoing series of experiments exploring
+                    AI-assisted CLI interfaces and agent architectures in ESKit.
+                </blockquote>
+
+            </section>
+
+        </article>
+
+    </main>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="/about.html">About</a>
+            <a href="/collaborate.html">Collaborate</a>
+            <a href="/blog.html">Blog</a>
+        </div>
+
+        <p class="footer-version">GingerPot 2026.09.0</p>
+    </footer>
+
+
+</body>
+
+</html>
