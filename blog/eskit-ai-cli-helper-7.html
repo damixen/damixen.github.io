@@ -1,0 +1,883 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta name="description"
+        content="Exploring dynamic command context loading in ESKit AI and how much CLI knowledge an AI agent actually needs at each stage of a task." />
+
+    <meta property="og:title" content="How Much Context Does an Agent Need? Dynamic Context Loading in ESKit AI" />
+    <meta property="og:description"
+        content="From common and minimal contexts to a lightweight overview with just-in-time command loading in ESKit AI." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://gingerpot.damixen.com/blog/eskit-ai-cli-helper-7.html" />
+
+    <title>How Much Context Does an Agent Need? Dynamic Context Loading in ESKit AI | GingerPot</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+
+    <link rel="icon" href="../favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="../favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+
+    <link rel="stylesheet" href="../css/style.css" />
+
+    <script type="module" src="/js/mermaid.js"></script>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/live.html">Live</a>
+                <a class="active" href="/blog.html">Blog</a>
+                <a href="/about.html">About</a>
+                <a href="/collaborate.html">Collaborate</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+
+        <p class="blog-next">
+            <strong>
+                Previous:
+                <a href="/blog/eskit-ai-cli-helper-6.html">
+                    ← Observing the Agent: Adding Events and Tracing to ESKit AI
+                </a>
+            </strong>
+        </p>
+
+        <article class="blog-card">
+
+            <header class="blog-header">
+
+                <p class="series">
+                    Transforming a CLI into an AI-Native CLI
+                </p>
+
+                <p class="blog-kicker">AI / CLI / ESKit / Context Engineering</p>
+                <p>October 2026 · ESKit experiment</p>
+
+                <h1>
+                    How Much Context Does an Agent Need? Dynamic Context Loading in ESKit AI
+                </h1>
+
+                <p class="blog-meta">
+                    From loading command definitions up front to acquiring them only when needed
+                </p>
+
+            </header>
+
+            <section>
+
+                <p>
+                    At the end of the previous experiment, I had added events and execution
+                    tracing to ESKit AI so I could observe what the agent was doing across
+                    multi-step workflows.
+                </p>
+
+                <p>
+                    I ended that post with another question:
+                </p>
+
+                <blockquote>
+                    How do I give the agent the right context at the right time without
+                    sending everything every time?
+                </blockquote>
+
+                <p>
+                    ESKit's AI command definitions are derived from the same command definitions
+                    used by the CLI. This keeps the AI interface connected to the actual ESKit
+                    command surface instead of maintaining a separate hand-written tool API.
+                </p>
+
+                <p>
+                    In an earlier experiment, I had already reduced the command representation
+                    from roughly 25K input tokens to around 7K by compiling the command
+                    description through a series of transformation passes.
+                </p>
+
+                <p>
+                    But even after making the representation smaller, another question remained:
+                </p>
+
+                <p>
+                    <strong>
+                        Does the agent need all of those command definitions for every request?
+                    </strong>
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>From Context Optimization to Context Selection</h2>
+
+                <p>
+                    Consider a simple request:
+                </p>
+
+                <pre><code>How do I create an index?</code></pre>
+
+                <p>
+                    To answer that question, the model does not need detailed definitions for
+                    snapshot restoration, archive synchronization, repository management, ILM,
+                    and every other ESKit operation.
+                </p>
+
+                <p>
+                    The command definitions may all be valid information, but they are not all
+                    relevant information for the current task.
+                </p>
+
+                <p>
+                    That shifted the experiment from:
+                </p>
+
+                <blockquote>
+                    How can I make the command context smaller?
+                </blockquote>
+
+                <p>
+                    to:
+                </p>
+
+                <blockquote>
+                    How much command context does the agent need at one time?
+                </blockquote>
+
+            </section>
+
+            <section>
+
+                <h2>The add_context Tool</h2>
+
+                <p>
+                    To let the agent request additional command information, I added an
+                    <code>add_context</code> tool.
+                    This is different from a normal ESKit command tool.
+                    A normal tool such as an index, snapshot, or repository operation eventually
+                    executes an ESKit command.
+                </p>
+
+                <p>
+                    The <code>add_context</code> is an <strong>agent-control tool</strong>. It changes
+                    what command information is available to the model.
+                </p>
+
+                <p>
+                    Conceptually, a request can look like this:
+                </p>
+
+                <pre><code>User:
+How do I create an index?
+
+Agent:
+I can see from the overview that ESKit has an index context.
+
+Tool call:
+add_context(["index"])
+
+ESKit AI:
+Adds "index" to the active contexts.
+Recompiles the command description through the passes.
+
+Agent:
+Receives the detailed index command definition and continues.</code></pre>
+
+                <p>
+                    The tool does not execute an Elasticsearch operation.
+                    It changes the agent's available command knowledge.
+                    The timeline is roughly like this:
+                </p>
+
+                <div class="mermaid">
+                    sequenceDiagram
+                    participant U as User
+                    participant A as Agent
+                    participant C as Context Builder
+                    participant P as Command Passes
+
+                    U->>A: "How do I create an index?"
+                    A->>A: Inspect current command context
+                    A->>C: add_context("index")
+                    C->>C: Add index to active contexts
+                    C->>P: Recompile command description
+                    P-->>C: Loaded index context
+                    C-->>A: Updated command context
+                    A-->>U: Continue with detailed index knowledge
+                </div>
+
+                <p>
+                    This turned dynamic context acquisition into an explicit part of the agent loop
+                    rather than something hidden inside prompt construction.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Reusing the Command Compilation Pipeline</h2>
+
+                <p>
+                    In the earlier context optimization work, ESKit already had a pass-based
+                    pipeline for compiling the full command definition into the representation
+                    provided to the model.
+                </p>
+
+                <p>
+                    For example, passes could remove fields that were unnecessary for the LLM
+                    or deduplicate common arguments.
+                    Dynamic context selection generation fit naturally into that
+                    same pipeline.
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["argparse Command Definition"]
+                    A --> B["Command IR"]
+                    B --> C["SelectContexts Pass"]
+                    C --> D["Cleanup / Optimization Passes"]
+                    D --> E["Final Command IR"]
+                </div>
+
+                <p>
+                    New phase was added to the pipeline to support dynamic context selection.
+                <ul>
+                    <li><code>SelectContexts</code> determines which detailed command contexts are
+                        currently active and includes them in the output.</li>
+                </ul>
+                </p>
+
+                <p>
+                    The existing cleanup passes can continue processing the result afterward.
+                    It is another transformation of the same command definition that ESKit
+                    already uses (Command IR), and the output is still a single optimized
+                    command description which is used to for prompt and generate tool call desc riptions for the model.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Dynamic Context Loading In the Agent Flow</h2>
+
+                <p>
+                    With those passes in place, the command description can be rebuilt whenever
+                    the set of active contexts changes.
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A(["User Request"]) --> B["Compile Command Description"]
+                    B --> C["Loaded Contexts"]
+                    C --> D(["LLM"])
+
+                    D --> E{"Enough command context?"}
+
+                    E -->|"Yes"| F["Continue Reasoning"]
+                    E -->|"No"| G["add_context"]
+
+                    G --> H["Add Requested Context"]
+                    H --> I["Re-run Command Passes"]
+                    I --> J["Updated Command Description"]
+                    J --> D
+
+                    F --> K{"Tool call needed?"}
+                    K -->|"Yes"| L["ESKit Tool Call"]
+                    K -->|"No"| M(["Final Response"])
+
+                    L --> N(["ESKit"])
+                    N --> O["Tool Result"]
+                    O --> D
+                </div>
+            </section>
+
+            <section>
+
+                <h2>Three Context Strategies</h2>
+                <p> Now the dynamic context loading can be applied to the agent flow,
+                    the next step is to experiment how much context the agent should now at the start.
+
+                <h2>Strategy 1: Common Context</h2>
+
+                <p>
+                    My first approach was to identify command contexts that seemed commonly
+                    useful and provide them to the model up front. In this case, the commands were to pull the
+                    latest cache and to list resources. The idea was those commands would be used as base operations to
+                    monitor resources.
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["User Request"] --> B["Common Command Contexts"]
+                    B --> C["Task-Specific Context"]
+                    C --> D["LLM"]
+                </div>
+
+                <p>
+                    This worked, and it was still better than loading the complete command
+                    definition.
+                    But a command being commonly useful does not mean it is useful for the
+                    current request.
+                    As I added more commands to the common set, the optimization started to work
+                    against itself.
+                    The approach reduced context compared with loading everything, but <strong>every definition included
+                        in the common context becomes a recurring input
+                        cost, even when the model never uses it.</strong>
+                </p>
+                <p>
+                    Also, one of the other interesting findings was that <strong>the model tended to settle down with
+                        the
+                        common context without asking more context in some requests</strong> such as asking what ESKit
+                    can do and
+                    characteristics of commands such as
+                    which commands are destructive. The model was not asking for more context because it assumed it
+                    already had the relevant information.
+                    More specific requests such as creating an index or pulling the latest cache, the agent used the
+                    add_context tool to acquire the relevant command context.
+                </p>
+
+                <p>
+
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Strategy 2: Minimal Context</h2>
+
+                <p>
+                    The next experiment went in the opposite direction.
+                    What if the model started with almost no ESKit command context?
+                    And let the agent to figure out what it needed and request anything without any pre-existing command
+                    knowledge.
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["User Request"] --> B["Minimal Agent Context"]
+                    B --> C["LLM"]
+                    C --> D["Load Context When Needed"]
+                </div>
+
+                <p>
+                    From a token perspective, this was much better.
+                    The initial request could remain very small, and detailed command definitions
+                    only needed to be loaded when the relevant capability was already known.
+                </p>
+
+                <p>
+                    But minimal context introduced a different problem:
+                    <strong>discovery</strong>.
+                </p>
+
+                <p>
+                    Consider broader questions such as:
+                </p>
+
+                <pre><code>What can ESKit do?</code></pre>
+
+                <p>
+                    or:
+                </p>
+
+                <pre><code>How do I accomplish something if there isn't a dedicated command?</code></pre>
+
+                <p>
+                    If the model knows almost nothing about the ESKit command surface, it has
+                    very little information from which to reason about those questions.
+                </p>
+
+                <p>
+                    However, I observed that the agent gave me very generic description of ESkit and ended the
+                    conversion with asking me
+                    if there are anything specific operations I wanted to perform instead of giving me an overview
+                    based on the partial common context it had. I preferred this bevavior because it was more honest
+                    about what it knew and what it didn't know.
+                    It was also more likely to ask for the relevant context when it needed it. Basically the agent asked
+                    me much more questions than the common contexts.
+                </p>
+            </section>
+
+            <section>
+
+                <h2>Strategy 3: Overview Context</h2>
+                <p>
+                    The last approach is to give the agent a lightweight
+                    <strong>overview</strong> of the ESKit command surface.
+                </p>
+
+                <p>
+                    Instead of containing every argument and option, the overview acts more like
+                    a table of contents.
+                    It can tell the model that ESKit has capabilities related to indices,
+                    snapshots, repositories, archives, ILM, reindexing, host operations, and
+                    other areas without providing every detailed command definition.
+                </p>
+
+                <p>
+                    When the model determines that it needs one of those capabilities, it can
+                    load the detailed context dynamically.
+                    This provides enough information for broad capability discovery while
+                    avoiding the recurring cost of loading complete definitions that may never
+                    be used.
+                </p>
+
+                <p> This approach worked well for capability discovery while maintaining efficient token usage.
+                    This behavior seems to be suitable for someone who is not familiar with the ESKit command surface
+                    and wants to explore what it can do.
+                    But still keep the token usage lower than loading all the context up front.
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["argparse Command Definition"]
+                    A --> B["Command IR"]
+                    B --> C["SelectContexts Pass"]
+                    C --> D["ContextOverview Pass"]
+                    D --> E["Cleanup / Optimization Passes"]
+                    E --> F["Final Command IR"]
+                </div>
+
+                <p>New phase, "ContextOverview Pass" was added to the pipeline to support this strategy.</p>
+
+            </section>
+
+            <section>
+
+                <h2>Comparing the Context Strategies</h2>
+
+                <p>
+                    The three approaches produced different tradeoffs:
+                </p>
+
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Strategy</th>
+                            <th>Initial Context</th>
+                            <th>Token Usage</th>
+                            <th>Broad Questions</th>
+                            <th>Tradeoff</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Common</strong></td>
+                            <td>Selected commonly useful command definitions</td>
+                            <td>Higher</td>
+                            <td>Limited</td>
+                            <td>
+                                Useful capabilities are available immediately, but unrelated
+                                definitions are repeatedly sent to the model.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Minimal</strong></td>
+                            <td>Almost no ESKit command information</td>
+                            <td>Lowest initial context</td>
+                            <td>Limited</td>
+                            <td>
+                                Efficient when the required capability is known, but provides
+                                little information for capability discovery.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Overview</strong></td>
+                            <td>Lightweight map of the command surface</td>
+                            <td>Low</td>
+                            <td>Good</td>
+                            <td>
+                                Supports discovery while allowing detailed definitions to be
+                                loaded only when needed.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>
+                    For the current experiment, the overview strategy provided the best balance.
+                    It does not try to minimize context at all costs. Instead, it tries to
+                    provide the smallest useful representation for the current stage of
+                    reasoning. So currently ESKit AI defaults to the overview starategy.
+                </p>
+
+                <p>
+                    Also this gave me an idea that different context strategies could be configured for different types
+                    of requests. For example, a request that is more exploratory in nature could use the overview
+                    strategy, while a request that is more specific and known could use the minimal strategy.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Making the Context Level Explicit</h2>
+                <p>
+                    During testing, I found that the model sometimes confused the overview with the detailed context.
+                    Almost behaving like the common context strategy, it assumed it had enough information to reason
+                    about a capability when it only had the overview.
+                    I therefore added an explicit context level to the command metadata.
+                </p>
+
+                <p>
+                    An overview definition can look conceptually like:
+                </p>
+
+                <pre><code>{
+    "program": "eskit snap",
+    "description": "Snapshot commands",
+    "metadata": {
+        "context": "snapshot",
+        "context_level": "overview"
+    }
+}</code></pre>
+                <p>
+                    After the context is loaded, the model receives the detailed definition:
+                </p>
+
+                <pre><code>{
+    "program": "eskit snap",
+    "description": "Snapshot commands",
+    "metadata": {
+        "context": "snapshot",
+        "context_level": "loaded"
+    },
+    "commands": {
+        ...
+    }
+}</code></pre>
+                <p>
+                    This gives the model an explicit distinction between:
+                </p>
+
+                <blockquote>
+                    I know this capability exists.
+                </blockquote>
+
+                <p>
+                    and:
+                </p>
+
+                <blockquote>
+                    I have enough information to use this capability.
+                </blockquote>
+
+            </section>
+
+            <section>
+
+                <h2>Just-in-Time Command Knowledge</h2>
+
+                <p>
+                    With this structure, a simple request can progressively acquire the command
+                    information it needs.
+                </p>
+
+                <pre><code>How do I create an index?</code></pre>
+
+                <p>
+                    can result in:
+                </p>
+
+                <pre><code>overview
+    ↓
+identify index capability
+    ↓
+add_context("index")
+    ↓
+recompile command description
+    ↓
+load detailed index definition
+    ↓
+construct the command</code></pre>
+
+                <p>
+                    A multi-step request can acquire several contexts over time.
+                </p>
+
+                <pre><code>Pull the latest cache and show me available indices.</code></pre>
+
+                <p>
+                    In one test, the agent progressed roughly like this:
+                </p>
+
+                <pre><code>overview
+    ↓
+load pull + index
+    ↓
+execute pull
+    ↓
+discover cat is needed
+    ↓
+load cat
+    ↓
+execute cat
+    ↓
+summarize result</code></pre>
+
+                <p>
+                    ESKit does not need to know the complete execution path before the workflow
+                    starts.
+                    The agent can progressively acquire command knowledge as the task develops.
+                </p>
+            </section>
+
+            <section>
+
+                <h2>Preloading Context with --contexts</h2>
+
+                <p>
+                    Dynamic discovery is useful, but sometimes I already know which command contexts will be needed.
+                    So, I added a <code>--contexts</code> option so those contexts can be supplied
+                    at the beginning of the interaction.
+                </p>
+
+                <pre><code>eskit ai "show me the available indices" --contexts cat</code></pre>
+
+                <p>
+                    Multiple contexts can also be preloaded:
+                </p>
+
+                <pre><code>eskit ai \
+  "pull the latest cache and show me the available indices" 
+  --contexts pull index cat</code></pre>
+
+                <p>
+                    This can avoid an additional <code>add_context</code> round when the relevant
+                    capabilities are already known.
+                    Importantly, the supplied contexts are a starting point rather than a restriction.
+                </p>
+
+                <p>
+                    I tested this by deliberately supplying the wrong initial context.
+                    For an index-related request, I started the agent with the
+                    <code>snapshot</code> context.
+                    The model recognized that the available context was insufficient, called <code>add_context</code>
+                    for the required context, and continued normally.
+                </p>
+
+                <p>
+                    That was an important behavior to verify:
+                    <code>--contexts</code> provides preloaded knowledge without disabling
+                    dynamic context acquisition.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>This Isn't Only About Tokens</h2>
+
+                <p>
+                    Token usage is easy to measure, and it was one of the reasons I started looking at command context
+                    more closely.
+                </p>
+
+                <p>
+                    But the part I find more interesting now is the boundary itself.
+                </p>
+
+                <blockquote>
+                    What information should the agent have access to at each stage of a task?
+                </blockquote>
+
+                <p>
+                    ESKit may have a large amount of information available.
+                    That does not mean every piece of that information needs to be exposed to the model immediately.
+                </p>
+
+                <p>
+                    The dynamic-context design gives the agent a controlled way to acquire more command knowledge when
+                    it needs it.
+                </p>
+
+                <div class="mermaid">
+                    flowchart LR
+                    A["Full ESKit Command Surface"] --> B["Overview"]
+                    B --> C["Agent"]
+                    C --> D["add_context"]
+                    D --> E["Detailed Context"]
+                    E --> C
+                </div>
+
+                <p>
+                    The important abstraction is not that some information is unavailable.
+                </p>
+
+                <p>
+                    It is that information can be exposed progressively through a defined
+                    boundary.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>The Focus Moved</h2>
+
+                <p>
+                    Once dynamic command contexts started working, another source of context became much more visible:
+                    <strong>tool results</strong>.
+                    In one recent test, I preloaded the correct context and asked the agent to show the available
+                    indices.
+                </p>
+
+                <p>
+                    The first model request was approximately:
+                </p>
+
+                <pre><code>3,334 input tokens</code></pre>
+
+                <p>
+                    The agent then executed the index listing operation.
+                </p>
+
+                <p>
+                    The next request, which included the raw tool result, grew to approximately:
+                </p>
+
+                <pre><code>17,051 input tokens</code></pre>
+
+                <p>
+                    At that point, command definitions were no longer the dominant source of context.
+                    I also noticed something else during the experiment. When the model received a large raw index
+                    result, its final summary contained a few small counting and status inconsistencies.
+                    More information was not necessarily making the reasoning easier.
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>How Much Result Does an Agent Need?</h2>
+
+                <p>
+                    This leads naturally to the next experiment.
+                </p>
+
+                <p>
+                    ESKit already separates raw command results from the projections presented to normal CLI for user
+                    friendly rendering.
+                    A command can retrieve a large amount of underlying information while the CLI displays only the
+                    fields useful for that particular view.
+                    Currently, the AI can receive much closer to the raw result.
+                </p>
+
+                <p>
+                    But if I treat the AI as another ESKit user, perhaps its default view should also be the projected
+                    result.
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["Raw Tool Result"] --> B["ESKit Projection"]
+                    B --> C["Projected Structured Result"]
+                    C --> D["AI Agent"]
+
+                    D --> E{"Need more detail?"}
+                    E -->|"No"| F["Continue Reasoning"]
+                    E -->|"Yes"| G["Request Raw Result"]
+                </div>
+
+                <p>
+                    The goal is not necessarily to hide information from the model or simply save tokens.
+                </p>
+
+                <p>
+                    It is another information capability boundary:
+                    <strong>Providing the agent with the representation appropriate for the current task, while retaining a path
+                    to more detail when needed.</strong>
+                </p>
+
+            </section>
+
+            <section>
+
+                <h2>Recap</h2>
+
+                <p>
+                    The progression of the series now looks like this:
+                </p>
+
+                <div class="mermaid">
+                    flowchart TD
+                    A["Part 1 - Argparse → AI CLI Helper"]
+                    A --> B["Part 2 - Tool Calls → ESKit Commands"]
+                    B --> C["Part 3 - Separate Execution and Presentation"]
+                    C --> D["Part 4 - 25K Tokens → 7K Tokens"]
+                    D --> E["Part 5 - One Tool Call → Agent Loop"]
+                    E --> F["Part 6 - Agent Loop → Observable Execution"]
+                    F --> G["Part 7 - Static Context → Dynamic Context Loading"]
+                </div>
+
+                <p>
+                    For this part, I started by asking:
+                </p>
+
+                <blockquote>
+                    How much command context does an agent need?
+                </blockquote>
+
+                <p>
+                    The next question is:
+                </p>
+
+                <blockquote>
+                    How much result data does an agent need?
+                </blockquote>
+
+            </section>
+
+            <section>
+
+                <p>
+                    <a href="https://github.com/damixen/eskit/tree/main/eskit/ai" target="_blank"
+                        rel="noopener noreferrer">
+                        ESKit AI implementation →
+                    </a>
+                </p>
+
+                <p>
+                    <a href="https://github.com/damixen/eskit/tree/main/eskit/command" target="_blank"
+                        rel="noopener noreferrer">
+                        ESKit Command Implementation →
+                    </a>
+                </p>
+
+                <blockquote>
+                    This is part of an ongoing series of experiments exploring
+                    AI-assisted CLI interfaces and agent architectures in ESKit.
+                </blockquote>
+
+            </section>
+
+        </article>
+
+    </main>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="/about.html">About</a>
+            <a href="/collaborate.html">Collaborate</a>
+            <a href="/blog.html">Blog</a>
+        </div>
+
+        <p class="footer-version">GingerPot 2026.10.0</p>
+    </footer>
+
+</body>
+
+</html>
