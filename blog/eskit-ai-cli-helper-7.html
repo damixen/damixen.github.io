@@ -133,9 +133,6 @@
                     To answer that question, the model does not need detailed definitions for
                     snapshot restoration, archive synchronization, repository management, ILM,
                     and every other ESKit operation.
-                </p>
-
-                <p>
                     The command definitions may all be valid information, but they are not all
                     relevant information for the current task.
                 </p>
@@ -168,9 +165,6 @@
                     This is different from a normal ESKit command tool.
                     A normal tool such as an index, snapshot, or repository operation eventually
                     executes an ESKit command.
-                </p>
-
-                <p>
                     The <code>add_context</code> is an <strong>agent-control tool</strong>. It changes
                     what command information is available to the model.
                 </p>
@@ -253,17 +247,18 @@ Receives the detailed index command definition and continues.</code></pre>
 
                 <p>
                     New phase was added to the pipeline to support dynamic context selection.
+                </p>
                 <ul>
                     <li><code>SelectContexts</code> determines which detailed command contexts are
                         currently active and includes them in the output.</li>
                 </ul>
-                </p>
+
 
                 <p>
                     The existing cleanup passes can continue processing the result afterward.
                     It is another transformation of the same command definition that ESKit
                     already uses (Command IR), and the output is still a single optimized
-                    command description which is used to for prompt and generate tool call desc riptions for the model.
+                    command description which is used for prompt and generating tool call descriptions for the model.
                 </p>
 
             </section>
@@ -307,7 +302,8 @@ Receives the detailed index command definition and continues.</code></pre>
 
                 <h2>Three Context Strategies</h2>
                 <p> Now the dynamic context loading can be applied to the agent flow,
-                    the next step is to experiment how much context the agent should now at the start.
+                    the next step is to experiment how much context the agent should know at the start.
+                </p>
 
                 <h2>Strategy 1: Common Context</h2>
 
@@ -373,12 +369,8 @@ Receives the detailed index command definition and continues.</code></pre>
                 </div>
 
                 <p>
-                    From a token perspective, this was much better.
                     The initial request could remain very small, and detailed command definitions
                     only needed to be loaded when the relevant capability was already known.
-                </p>
-
-                <p>
                     But minimal context introduced a different problem:
                     <strong>discovery</strong>.
                 </p>
@@ -402,9 +394,9 @@ Receives the detailed index command definition and continues.</code></pre>
 
                 <p>
                     However, I observed that the agent gave me very generic description of ESkit and ended the
-                    conversion with asking me
+                    conversation with asking me
                     if there are anything specific operations I wanted to perform instead of giving me an overview
-                    based on the partial common context it had. I preferred this bevavior because it was more honest
+                    based on the partial common context it had. I preferred this behavior because it was more honest
                     about what it knew and what it didn't know.
                     It was also more likely to ask for the relevant context when it needed it. Basically the agent asked
                     me much more questions than the common contexts.
@@ -425,9 +417,6 @@ Receives the detailed index command definition and continues.</code></pre>
                     It can tell the model that ESKit has capabilities related to indices,
                     snapshots, repositories, archives, ILM, reindexing, host operations, and
                     other areas without providing every detailed command definition.
-                </p>
-
-                <p>
                     When the model determines that it needs one of those capabilities, it can
                     load the detailed context dynamically.
                     This provides enough information for broad capability discovery while
@@ -451,7 +440,142 @@ Receives the detailed index command definition and continues.</code></pre>
                     E --> F["Final Command IR"]
                 </div>
 
-                <p>New phase, "ContextOverview Pass" was added to the pipeline to support this strategy.</p>
+                <p>Another new phase, "ContextOverview Pass" was added to the pipeline to support this strategy.</p>
+
+            </section>
+
+            <section>
+
+                <h2>Measuring the Strategies</h2>
+
+                <p>
+                    To put numbers on the comparison, I ran five prompts through each strategy
+                    using <code>claude-haiku-4-5-20251001</code>. Each prompt was run once per
+                    strategy, so these numbers are indicative rather than statistical. Token
+                    counts are the input tokens reported in the ESKit AI trace. For runs that
+                    called <code>add_context</code>, the figure is the sum of both requests.
+                </p>
+
+                <p><strong>Initial request (before any add_context)</strong></p>
+
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Strategy</th>
+                            <th>Input tokens</th>
+                            <th>vs. Common</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Common</strong></td>
+                            <td>3,312</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Minimal</strong></td>
+                            <td>1,612</td>
+                            <td>−51%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Overview</strong></td>
+                            <td>2,464</td>
+                            <td>−26%</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p><strong>Total input tokens per prompt</strong></p>
+
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Prompt</th>
+                            <th>Common</th>
+                            <th>Minimal</th>
+                            <th>Overview</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>What is ESKit?</td>
+                            <td>3,312</td>
+                            <td>1,612</td>
+                            <td>2,464</td>
+                        </tr>
+                        <tr>
+                            <td>How do I create an index?</td>
+                            <td>7,647</td>
+                            <td>4,642</td>
+                            <td>6,283</td>
+                        </tr>
+                        <tr>
+                            <td>Which operations are destructive?</td>
+                            <td>3,313</td>
+                            <td>11,491</td>
+                            <td>2,465</td>
+                        </tr>
+                        <tr>
+                            <td>How do I accomplish X when there isn't a dedicated command?</td>
+                            <td>3,320</td>
+                            <td>1,620</td>
+                            <td>2,472</td>
+                        </tr>
+                        <tr>
+                            <td>How can I see snapshot cache in eskit?</td>
+                            <td>3,317</td>
+                            <td>5,318</td>
+                            <td>5,808</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total</strong></td>
+                            <td><strong>20,909</strong></td>
+                            <td><strong>24,683</strong></td>
+                            <td><strong>19,492</strong></td>
+                        </tr>
+                        <tr>
+                            <td>add_context calls</td>
+                            <td>1</td>
+                            <td>3</td>
+                            <td>2</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>
+                    On the initial request, Overview was about 26% smaller than Common, while
+                    Minimal was about 51% smaller. That part is expected: Minimal begins with
+                    almost no ESKit command knowledge, so it has the smallest starting context.
+                    The total token counts tell a more interesting story. In this small experiment,
+                    Overview used the fewest total input tokens across the five prompts, followed
+                    by Common and then Minimal. However, I don't interpret this as evidence that
+                    Minimal is generally the most expensive strategy.
+                </p>
+
+                <p>
+                    Minimal was actually the least expensive strategy for three of the five
+                    prompts. The result changed substantially for
+                    <code>Which operations are destructive?</code>, where the agent loaded all 13
+                    contexts in a single <code>add_context</code> call. The following request grew
+                    from 1,613 to 9,878 input tokens. That single run accounts for much of
+                    Minimal's higher total in this experiment.
+                </p>
+
+                <p>
+                    With only one run per prompt, these measurements are not intended to establish
+                    which strategy is always the most token-efficient. Instead, they show the
+                    different behaviors that each starting strategy can produce and helped me
+                    decide which tradeoff I prefer as the current ESKit AI default.
+                </p>
+
+                <p>
+                    Token counts also say nothing by themselves about answer quality. For
+                    <code>How can I see snapshot cache in eskit?</code>, Minimal loaded the
+                    <code>snapshot</code> context, found no matching command, and concluded there
+                    wasn't one. Common and Overview both reached <code>eskit cat snap</code>.
+                    For <code>What is ESKit?</code>, Overview also produced the broadest capability
+                    description of the three.
+                </p>
 
             </section>
 
@@ -468,7 +592,8 @@ Receives the detailed index command definition and continues.</code></pre>
                         <tr>
                             <th>Strategy</th>
                             <th>Initial Context</th>
-                            <th>Token Usage</th>
+                            <th>Initial Tokens</th>
+                            <th>Total Tokens (5 prompts)</th>
                             <th>Broad Questions</th>
                             <th>Tradeoff</th>
                         </tr>
@@ -477,7 +602,8 @@ Receives the detailed index command definition and continues.</code></pre>
                         <tr>
                             <td><strong>Common</strong></td>
                             <td>Selected commonly useful command definitions</td>
-                            <td>Higher</td>
+                            <td>3,312</td>
+                            <td>20,909</td>
                             <td>Limited</td>
                             <td>
                                 Useful capabilities are available immediately, but unrelated
@@ -487,37 +613,48 @@ Receives the detailed index command definition and continues.</code></pre>
                         <tr>
                             <td><strong>Minimal</strong></td>
                             <td>Almost no ESKit command information</td>
-                            <td>Lowest initial context</td>
+                            <td>1,612</td>
+                            <td>24,683</td>
                             <td>Limited</td>
                             <td>
-                                Efficient when the required capability is known, but provides
-                                little information for capability discovery.
+                                Guarantees a small starting context, but subsequent context loading
+                                depends heavily on how the agent interprets the request.
                             </td>
                         </tr>
                         <tr>
                             <td><strong>Overview</strong></td>
                             <td>Lightweight map of the command surface</td>
-                            <td>Low</td>
+                            <td>2,464</td>
+                            <td>19,492</td>
                             <td>Good</td>
                             <td>
-                                Supports discovery while allowing detailed definitions to be
-                                loaded only when needed.
+                                Adds some initial context to support discovery while allowing detailed
+                                definitions to be loaded only when needed.
                             </td>
                         </tr>
                     </tbody>
                 </table>
 
                 <p>
-                    For the current experiment, the overview strategy provided the best balance.
-                    It does not try to minimize context at all costs. Instead, it tries to
-                    provide the smallest useful representation for the current stage of
-                    reasoning. So currently ESKit AI defaults to the overview starategy.
+                    For the current ESKit AI design, I prefer the Overview strategy as the
+                    default. It keeps the starting context substantially smaller than Common
+                    while preserving enough information for the agent to reason about the
+                    broader ESKit command surface.
                 </p>
 
                 <p>
-                    Also this gave me an idea that different context strategies could be configured for different types
-                    of requests. For example, a request that is more exploratory in nature could use the overview
-                    strategy, while a request that is more specific and known could use the minimal strategy.
+                    This choice isn't based on the five-prompt token total alone. The experiment
+                    also showed differences in discovery behavior and answer quality. Overview
+                    gives up some of Minimal's initial token advantage in exchange for giving the
+                    agent a map of what is available.
+                </p>
+
+                <p>
+                    Minimal is still interesting, especially when the relevant operation is
+                    already known. This also suggests that context strategy does not necessarily
+                    have to be fixed. An exploratory request might benefit from Overview, while
+                    a more specific request with known capabilities could potentially start from
+                    Minimal. That is something I can experiment with separately.
                 </p>
 
             </section>
@@ -652,7 +789,7 @@ summarize result</code></pre>
                 </p>
 
                 <pre><code>eskit ai \
-  "pull the latest cache and show me the available indices" 
+  "pull the latest cache and show me the available indices" \ 
   --contexts pull index cat</code></pre>
 
                 <p>
@@ -798,8 +935,9 @@ summarize result</code></pre>
 
                 <p>
                     It is another information capability boundary:
-                    <strong>Providing the agent with the representation appropriate for the current task, while retaining a path
-                    to more detail when needed.</strong>
+                    <strong>Providing the agent with the representation appropriate for the current task, while
+                        retaining a path
+                        to more detail when needed.</strong>
                 </p>
 
             </section>
@@ -838,6 +976,80 @@ summarize result</code></pre>
                 <blockquote>
                     How much result data does an agent need?
                 </blockquote>
+
+            </section>
+
+            <section>
+
+                <h2>A Side Note: Dynamic Context and Prompt Caching</h2>
+
+                <p>
+                    There is another tradeoff in the current design that I haven't measured yet:
+                    <strong>prompt caching</strong>.
+                </p>
+
+                <p>
+                    The current <code>add_context</code> implementation recompiles the command
+                    description whenever the active contexts change. Because that description
+                    contributes to the prompt and tool definitions sent to the model, changing it
+                    may reduce how much of the previous request can benefit from prompt caching.
+                </p>
+
+                <p>
+                    This creates an interesting tradeoff. Dynamic context loading reduces the
+                    amount of command information sent to the model at a given time, but changing
+                    that information between turns may work against prefix-based caching. I have
+                    not measured that interaction yet, so for now I treat it as a question for a
+                    separate experiment rather than a conclusion from the current one.
+                </p>
+
+                <p>
+                    This may also matter more in longer multi-step workflows than in the short
+                    experiments in this post. Several of the initial requests were relatively
+                    small, while later turns can grow substantially once tool results and
+                    conversation history accumulate.
+                </p>
+
+                <h3>A Future Experiment: A Cache-Friendly Mode</h3>
+
+                <p>
+                    One alternative would be to keep the system prompt and tool definitions
+                    stable and return newly requested command definitions as the result of
+                    <code>add_context</code>. The loaded definition could still carry the
+                    <code>"context_level": "loaded"</code> marker so the model can distinguish
+                    between:
+                </p>
+
+                <blockquote>
+                    I know this capability exists.
+                </blockquote>
+
+                <p>
+                    and:
+                </p>
+
+                <blockquote>
+                    I have enough information to use this capability.
+                </blockquote>
+
+                <p>
+                    In that design, new command knowledge would accumulate in the conversation
+                    rather than causing the command description itself to be rebuilt.
+                </p>
+
+                <p>
+                    My hypothesis is that this could make better use of prompt caching in longer
+                    sessions, potentially reducing cost or latency. The tradeoff is that loaded
+                    definitions would accumulate in the conversation history, and the execution
+                    interface might need to become more generic.
+                </p>
+
+                <p>
+                    I haven't verified whether that design is actually better. A future experiment
+                    could use the tracing added in Part 6 to record cache read and write token
+                    counts and compare the two approaches by <strong>cost, latency, and context
+                        growth</strong>, rather than looking only at raw input tokens.
+                </p>
 
             </section>
 
