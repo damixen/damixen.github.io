@@ -25,7 +25,6 @@
         const link = document.createElement('a');
         link.className = 'provider-link';
         link.href = p.url(ip);
-        link.target = '_blank';
         link.rel = 'noopener noreferrer';
         const name = document.createElement('strong');
         name.textContent = `${p.name} ↗`;
