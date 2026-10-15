@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Curated IP investigation links for security analysts." />
+  <title>IP Lookup | GingerPot OSINT</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/osint/shared/osint.css" />
+</head>
+
+<body>
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="nav-links">
+        <a href="/">Home</a><a href="/live.html">Live</a><a class="active" href="/osint/">Tools</a><a
+          href="/blog.html">Blog</a><a href="/about.html">About</a><a href="/collaborate.html">Collaborate</a>
+      </div>
+    </div>
+  </nav>
+  <main class="container">
+    <section class="card">
+      <div class="section-header"><span class="status-dot"></span>
+        <h1>IP Lookup</h1>
+      </div>
+      <p>Enter an IPv4 address or open this page using <code>?ip=8.8.8.8</code>.</p>
+      <form id="lookup-form" class="osint-form">
+        <input id="ip-input" type="text" placeholder="e.g. 8.8.8.8" aria-label="IPv4 address" autocomplete="off"
+          spellcheck="false" required />
+        <button type="submit">Find OSINT Links →</button>
+      </form>
+      <p id="lookup-message" class="lookup-note" aria-live="polite">No automated scanning or API calls are performed.
+      </p>
+    </section>
+    <section class="card" id="lookup-output">
+      <h2 id="results-heading">Investigation Sources</h2>
+      <div id="lookup-results" hidden></div>
+    </section>
+  </main>
+  <footer class="footer">
+    <p>GingerPot · OSINT Tools</p>
+    <p class="footer-version">GingerPot 2026.10.1</p>
+  </footer>
+  <script src="/osint/shared/providers.js"></script>
+  <script src="/osint/ip-lookup/app.js"></script>
+</body>
+
+</html>
