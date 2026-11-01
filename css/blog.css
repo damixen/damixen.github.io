@@ -1,0 +1,83 @@
+
+/* Markdown article layout */
+#article-content {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 24px 64px;
+  line-height: 1.75;
+}
+
+/* Headings and paragraphs */
+#article-content h1 {
+  line-height: 1.3;
+  margin: 0 0 32px;
+}
+
+#article-content h2 {
+  margin: 48px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+#article-content h3 {
+  margin: 32px 0 12px;
+}
+
+#article-content p {
+  margin: 16px 0;
+}
+
+/* Markdown tables */
+#article-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 0.9rem;
+}
+
+#article-content th,
+#article-content td {
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  text-align: left;
+  vertical-align: top;
+}
+
+#article-content th {
+  background: var(--card);
+  font-weight: 600;
+}
+
+/* Code blocks */
+#article-content pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 24px 0;
+}
+
+#article-content pre code {
+  white-space: pre;
+}
+
+#article-content :not(pre) > code {
+  background: var(--card);
+  padding: 2px 5px;
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  #article-content {
+    padding: 0 16px 40px;
+    margin: 24px auto;
+  }
+
+  #article-content table {
+    display: block;
+    overflow-x: auto;
+  }
+}

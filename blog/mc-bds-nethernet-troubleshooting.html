@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NetherNet Troubleshooting | GingerPot</title>
+
+    <!-- Your existing GingerPot CSS -->
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="../css/blog.css" />
+
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/live.html">Live</a>
+                <a href="/osint/">Tools</a>
+                <a class="active" href="/blog.html">Blog</a>
+                <a href="/about.html">About</a>
+                <a href="/collaborate.html">Collaborate</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <article id="article-content">
+            Loading article...
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="/about.html">About</a>
+            <a href="/collaborate.html">Collaborate</a>
+            <a href="/blog.html">Blog</a>
+        </div>
+
+        <p class="footer-version">GingerPot 2026.10.0</p>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <script src="../js/markdown-renderer.js"></script>
+
+    <script>
+        renderMarkdown(
+            "../posts/mc-bds-nethernet-troubleshooting.md",
+            "article-content"
+        );
+    </script>
+</body>
+
+</html>
